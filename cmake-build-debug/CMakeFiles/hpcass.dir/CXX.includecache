@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/birkulstad/hpc-exercises/hpcass/main.cpp
+iostream
+-
+cstdlib
+-
+cmath
+-
+ctime
+-
+iomanip
+-
+blas.h
+/Users/birkulstad/hpc-exercises/hpcass/blas.h
+
