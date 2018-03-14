@@ -6,6 +6,12 @@
 
 #IncludeRegexTransform: 
 
+/Users/birkulstad/hpc-exercises/hpcass/cblas.h
+stddef.h
+-
+openblas_config.h
+/Users/birkulstad/hpc-exercises/hpcass/openblas_config.h
+
 /Users/birkulstad/hpc-exercises/hpcass/main.cpp
 iostream
 -
@@ -17,6 +23,20 @@ ctime
 -
 iomanip
 -
-blas.h
-/Users/birkulstad/hpc-exercises/hpcass/blas.h
+vector
+-
+numeric
+-
+functional
+-
+algorithm
+-
+cblas.h
+/Users/birkulstad/hpc-exercises/hpcass/cblas.h
+
+/Users/birkulstad/hpc-exercises/hpcass/openblas_config.h
+stdio.h
+-
+complex.h
+-
 
