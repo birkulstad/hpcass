@@ -34,6 +34,9 @@ void printMatrix(int*, int, int);
 double detMatrix2(double*);
 void invMatrix2(double*, double*);
 
+int getInd_i(int, int);
+int getInd_j(int, int);
+
 
 int main() {
 // ----- Defining Materials -----------------
@@ -97,11 +100,11 @@ int main() {
     //cout << x << endl;
     //printArray(x, nelem_x + 1);
 
-    //double x2[nelem_x];
+    //double xsq[nelem_x];
     //creating x^2 array
-    double x2[nelem_x + 1];
+    double xsq[nelem_x + 1];
     for (int i = 0; i < nelem_x; i++) {
-        *(x2 + i) = x[i] * x[i];
+        *(xsq + i) = x[i] * x[i];
     }
 
     //calculating h = a * x^2 + b * x + h1
@@ -111,15 +114,15 @@ int main() {
         i = h1;
     }
     //printArray(*h,nelem_x);
-    cblas_dscal(nelem_x + 1, a, x2, 1);    //multiply x^2 by a -> x2
-    //printArray(*x2,nelem_x);
-    cblas_daxpy(nelem_x + 1, b, x, 1, x2, 1); //multiply x by b and add x^2 + a
-    //printArray(*x2,nelem_x);
-    cblas_daxpy(nelem_x + 1, 1, x2, 1, h, 1);
+    cblas_dscal(nelem_x + 1, a, xsq, 1);    //multiply x^2 by a -> x2
+    //printArray(*xsq,nelem_x);
+    cblas_daxpy(nelem_x + 1, b, x, 1, xsq, 1); //multiply x by b and add x^2 + a
+    //printArray(*xsq,nelem_x);
+    cblas_daxpy(nelem_x + 1, 1, xsq, 1, h, 1);
     //printArray(h, nelem_x + 1);
 
     //double h[nelem_x];
-    //double h = a * x2 + b * x + h1
+    //double h = a * xsq + b * x + h1
 
     //OPTIMISE: If h is constant (i.e. a and b are zero), Y can be stored as y
     double y[nelem_y + 1];
@@ -188,6 +191,7 @@ int main() {
             eNodes[k] = ElemNode[(nnode_elem + 1) * i + k + 1]; // Associated element nodes
             // Calculating indices (i,j)=(p,q) to obtain (x,y)-coordinates from X and Y
             // Note that p and q are calculated bearing in mind NodeTopo numbering of nodes
+            // TODO: Replace p and q with getInd_i and getInd_j
             p = eNodes[k] % (nelem_y + 1);  // Row number
             q = (eNodes[k] - (eNodes[k] % (nelem_y + 1))) / (nelem_y + 1); // Column number
             //cout << "p,q = " << p << "," << q << "    np+q = " << (nelem_x + 1) * p + q << "    X[] = " << X[(nelem_x + 1) * p + q] << endl;
@@ -267,6 +271,7 @@ int main() {
         // - data for element i
         for (int k = 0; k < nnode_elem; k++){
             eNodes[k] = ElemNode[(nnode_elem + 1) * i + k + 1]; // Associated element nodes
+            // TODO: Replace p and q with getInd_i and getInd_j
             p = eNodes[k] % (nelem_y + 1);                                  // Row number
             q = (eNodes[k] - (eNodes[k] % (nelem_y + 1))) / (nelem_y + 1);  // Column number
             eCoord[2 * k + 0] = X[(nelem_x + 1) * p + q];  // node x-coordinates
@@ -287,7 +292,7 @@ int main() {
             eY[j] = eCoord[j + 1]; // Node y-coordinates
         }
 
-        memset(Ke, 0.0, sizeof(Ke) * nnode_elem * nnode_elem); // Reset Ke to 0 for new member
+        memset(Ke, 0.0, sizeof(Ke) * nnode_elem * nnode_elem); // Reset Ke to 0 for each new member
         // ----- Element stiffness matrix, Ke, found by Gauss integration -----------
 
         for (int j = 0; j < gaussorder; j++){
@@ -341,9 +346,9 @@ int main() {
                 cblas_dgemm(CblasRowMajor,CblasNoTrans,CblasNoTrans, 4, 4, 2, Ke_a, C, 2, B, 4, 1, Ke, 4);
             }
         }
-        printMatrix(Ke,4,4);
+        //printMatrix(Ke,4,4);
         //printMatrix(J,2,2);
-        cout << "-----------------------" << endl;
+        //cout << "-----------------------" << endl;
         //printMatrix(gDof,1,4);
 
         for (int j = 0; j < nnode_elem; j++){
@@ -356,13 +361,160 @@ int main() {
 
 
     }
+    // Release memory from heap
+    delete[] Ke;
 
     //printMatrix(K,nnode, nnode);
 
+    // Case 1
+    // Compute nodal boundary flux vector --- natural B.C
+    //  Defined on edges
+    int q_edge; // Which edge the heat flux is applied to 0 = left, 1 = top, 2 = right, 3 = bottom
+    int mult_i, j;
+    int nFluxNodes = 0; // Number of nodes on the edge of the beam
+
+    //IMPROVE: Add command line input check and error message for default case
+
+    q_edge = 2;
+    switch (q_edge){
+        // Left edge
+        case 0: nFluxNodes = nelem_y + 1;
+                mult_i = (nelem_x + 1);
+                j = 0;
+                break;
+
+        // Top edge
+        case 1: nFluxNodes = nelem_x + 1;
+                mult_i = 1;
+                j = 0;
+                break;
+
+        // Right edge
+        case 2: nFluxNodes = nelem_y + 1;
+                mult_i = (nelem_x + 1);
+                j = nelem_x;
+                break;
+
+        // Bottom edge
+        case 3: nFluxNodes = nelem_x + 1;
+                mult_i = 1;
+                j = (nelem_x + 1) * nelem_y;
+                break;
+
+        default: cout << "Error! Choose a value between 0 and 3 corresponding to the edge with heat flux!" << endl;
+                 cout << "0 = left, 1 = top, 2 = right, 3 = bottom" << endl;
+    }
+
+    // Initialise fluxNodes with size appropriate to the edge selected
+    int* fluxNodes = new int[nFluxNodes];
+
+    printMatrix(NodeTopo,6,11);
+    //cout << nFluxNodes << endl;
+
+    for (int i = 0; i < nFluxNodes; i++){
+        fluxNodes[i] = NodeTopo[mult_i * i + j];
+    }
+
+    //printMatrix(fluxNodes,1,nFluxNodes);
 
 
+
+    // ----- Defining load ----------------------------
+    double q_flux = 2500;  // Constant flux at right edge of the beam
+    int nbe = nFluxNodes - 1;  // Number of elements with flux load
+
+    // Element boundary condition
+    double* n_bc = new double[4 * nbe];
+    for (int i = 0; i < nbe; i++) {
+        n_bc[nbe * 0 + i] = fluxNodes[i];  // node 1
+        n_bc[nbe * 1 + i] = fluxNodes[i + 1];  // node 2
+        n_bc[nbe * 2 + i] = q_flux; // flux value at node 1
+        n_bc[nbe * 3 + i] = q_flux;  //flux value at node 2
+    }
+    //printMatrix(n_bc, 4, 5);
+
+    //printArray(x,nelem_x+1);
+    printMatrix(X,nelem_y+1,nelem_x+1);
+    printMatrix(Y,nelem_y+1,nelem_x+1);
+
+    // --------------- Calculate Nodal Flux Vector f -------------------
+
+    double f[nnode] = {0};  // initialize nodal flux vector
+    int node1; // first node
+    int node2; // second node
+    double x1, y1, x2, y2;
+    double flux; // WHAT DOES THIS ACTUALLY DO?
+    double leng; // length of edge
+    double n_bce[2]; // initialising flux values at the two nodes connected to an edge IMPROVE: check that 2 is constant
+
+    //printMatrix(Coord,(nelem_x + 1) * (nelem_y + 1),2);
+    double* fq = new double[2]; // initialize the nodal source vector IMPROVE: check that 2 is constant
+
+    for (int i = 0; i < nbe; i++) {
+
+        memset(fq, 0.0, sizeof(fq) * 2); // Reset fq to 0 for each new element
+
+        node1 = fluxNodes[i]; //int(n_bc[nbe * 0 + i]);
+        node2 = fluxNodes[i + 1]; //int(n_bc[nbe * 0 + i]);
+        n_bce[0] = n_bc[nbe * 2 + i];  // flux value at an edge node 1
+        n_bce[1] = n_bc[nbe * 3 + i];  // flux value at an edge node 2
+        //cout << "node1 = " << node1 << ", node2 = " << node2 << endl;
+
+        x1 = X[(nelem_x + 1) * getInd_i(node1,nelem_y) + getInd_j(node1,nelem_y)];  // x coord of the first node
+        y1 = Y[(nelem_x + 1) * getInd_i(node1,nelem_y) + getInd_j(node1,nelem_y)];  // y coord of the first node
+        x2 = X[(nelem_x + 1) * getInd_i(node2,nelem_y) + getInd_j(node2,nelem_y)];  // x coord of the first node
+        y2 = Y[(nelem_x + 1) * getInd_i(node2,nelem_y) + getInd_j(node2,nelem_y)];  // y coord of the second node
+
+
+        //cout << "x1,y1 = " << x1 << "," << y1 << ", x2,y2 = " << x2 << "," << y2 << endl;
+
+        leng = sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));  // edge length
+        //cout << leng << endl;
+        detJ = leng / 2;  // 1D Jacobian
+
+        // IMPROVE: Check that sqrt(nnode_elem) is a good way of getting to 2
+        for (int j = 0; j < gaussorder; j++){  // integrate in xi direction (1D integration)
+
+            xi = GP[j];
+
+            // 1D  shape functions in parent domain
+            vN = {1 - xi, 1 + xi};
+            vN *= 0.5;
+            for (int l = 0; l < sqrt(nnode_elem); l++ ){N[l] = vN[l];};
+            printMatrix(N,1,2);
+
+            flux = cblas_ddot(sqrt(nnode_elem), N, 1, n_bce, 1);
+            cout << flux << endl;
+            // CBLAS to perform fq += fq + N.T * flux * detJ * th * W[j];  // nodal flux
+            cblas_daxpy(sqrt(nnode_elem), flux * detJ * th * W[j], N, 1, fq, 1);
+
+            //printMatrix(fq, 1, 2);
+        }
+        //printMatrix(fq,1,2);
+
+        //CBLAS to perform fq = -fq;  // define flux as negative integrals
+        cblas_dscal(sqrt(nnode_elem),-1,fq,1);
+        //printMatrix(fq,1,2);
+
+        f[node1] += fq[0];
+        f[node2] += fq[1];
+
+    }
+    //printMatrix(f, 1, nnode);
+
+    
 
     return 0;
+}
+
+int getInd_i(int node, int nrow){
+    int i = node % (nrow + 1); // Row number
+    return i;
+}
+
+int getInd_j(int node, int nrow){
+    int j = (node - (node % (nrow + 1))) / (nrow + 1);  // Column number
+    return j;
 }
 
 
