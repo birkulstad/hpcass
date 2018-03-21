@@ -7,6 +7,7 @@
 #include <numeric>
 #include <functional>
 #include <algorithm>
+#include <valarray>
 
 #include "cblas.h"
 
@@ -29,6 +30,10 @@ void printArray(double*, int);
 void printArray(int*, int);
 void printMatrix(double*, int, int);
 void printMatrix(int*, int, int);
+
+double detMatrix2(double*);
+void invMatrix2(double*, double*);
+
 
 int main() {
 // ----- Defining Materials -----------------
@@ -222,7 +227,7 @@ int main() {
             nDof += 1;
         }
     }
-    printMatrix(globDof,nnode,2);
+    //printMatrix(globDof,nnode,2);
 
     // Assembly of global stiffness matrix K -------------
     // ----- Gauss-points and weights ----------------------------
@@ -234,23 +239,28 @@ int main() {
 
     // ----- Conductivity matrix D  -----------
     double D[4] = {kx, kxy, kxy, ky};
-    // ----------------------------------------
-    double Kp[nDof * nDof];  // Initiation of global stiffness matrix K
-    double Ke[nnode_elem * nnode_elem]; // Initialising element stiffness matrix Ke
+
+
+
+    // ------ Defining variables used in K-assembly --------------
+    double K[nnode * nnode]={0};  // Initiation of global stiffness matrix K
+    double* Ke = new double[nnode_elem * nnode_elem];   // Initialising element stiffness matrix Ke on heap to allow
+                                                        // memset for every new element
     double eCoord[nnode_elem * 2]; // For storing the node coordinates
     double eX[nnode_elem]; // For storing the node x-coordinates
     double eY[nnode_elem]; // For storing the node y-coordinates
     double eta, xi; // Natural coordinates
     double N[nnode_elem]; // Shape function matrix
     double GN[2 * nnode_elem]; // Shape function derivative matrix
+    valarray <double> vN(nnode_elem); //valarray temporary class to allow direct assignement of shape function matrix for each iteration
+    valarray <double> vGN(2 * nnode_elem); //valarray temporary class to allow direct assignement of derivative shape function matrix for each iteration
     double J[gaussorder * gaussorder]; // Jacobian Matrix
     double DetJ[gaussorder * gaussorder]; // For storing the determinants of J
     double detJ; //Determinant of J
     double invJ[gaussorder * gaussorder]; // Inverse Jacobian Matrix
     double B[2 * nnode_elem]; // Some dot product IMPROVE
-
-
-
+    double C[nnode_elem * 2]; // Some dot product IMPROVE
+    double Ke_a;
 
 
     for (int i = 0; i < nelem; i++) {
@@ -263,49 +273,83 @@ int main() {
             eCoord[2 * k + 1] = Y[(nelem_x + 1) * p + q];  // node y-coordinates
         }
 
+        //printMatrix(eCoord,nnode_elem,2);
 
-        double gDof[nnode_elem] = {0}; // used to construct scatter matrix
+        int gDof[nnode_elem] = {0}; // used to construct scatter matrix
 
         for (int j = 0; j < nnode_elem; j++) {
             // global dof for node j gathered in element gDof OPTIMISE: gDof == eNodes
             // potential simplification as per above, could have unknown effects in different cases
             gDof[j] = globDof[2 * eNodes[j] + 1];
 
+            // IMPROVE: Are these variables used for anything?
             eX[j] = eCoord[j + 0]; // Node x-coordinates
             eY[j] = eCoord[j + 1]; // Node y-coordinates
         }
 
-
+        memset(Ke, 0.0, sizeof(Ke) * nnode_elem * nnode_elem); // Reset Ke to 0 for new member
         // ----- Element stiffness matrix, Ke, found by Gauss integration -----------
 
         for (int j = 0; j < gaussorder; j++){
             for (int k = 0; k < gaussorder; k++){
-                eta = GP[i];
-                xi = GP[j];
-
-                // FIX elegant way to assign N, GN etc without allocating new memory every time
-                // maybe define N1, N2 etc and assign to N
+                eta = GP[j];
+                xi = GP[k];
+                //cout << "GP = ";
+                //printArray(GP,2);
+                //cout << "eta, xi = " << eta << "," << xi << endl;
                 // shape functions matrix
-                N = {0.25 * (1 - xi) * (1 - eta), 0.25 * (1 + xi) * (1 - eta),
-                        0.25 * (1 + xi) * (1 + eta), 0.25 * (1 - xi) * (1 + eta)};
+                vN = {(1 - xi) * (1 - eta), (1 + xi) * (1 - eta),
+                      (1 + xi) * (1 + eta), (1 - xi) * (1 + eta)};
+                vN *= 0.25;
+                for (int l = 0; l < nnode_elem; l++ ){N[l] = vN[l];};
 
                 // derivative (gradient) of the shape functions
-                GN = {0.25 * -(1 - eta), 0.25 * (1 - eta), 0.25 * (1 + eta), 0.25 * -(1 + eta),
-                0.25 * -(1 - xi), 0.25 * -(1 + xi), 0.25 * (1 + xi), 0.25 * (1 - xi)};
+                vGN = {-(1 - eta), 1 - eta, 1 + eta, -(1 + eta),
+                -(1 - xi), -(1 + xi), 1 + xi, 1 - xi};
+                vGN *= 0.25;
+                for (int l = 0; l < 2 * nnode_elem; l++ ){GN[l] = vGN[l];};
+                //printMatrix(GN,2, nnode_elem);
 
                 // Jacobian matrix
-                J = np.dot(GN, eCoord)
+                cblas_dgemm(CblasRowMajor,CblasNoTrans,CblasNoTrans, 2, 2, 4, 1, GN, 4, eCoord, 2, 0, J, 2);
+
 
                 // Jacobian determinant
-                DetJ = np.linalg.det(J)
+                // TODO: IMPROVE BY IMPLEMENTING LAPACK DETERMINANT
+                detJ = detMatrix2(J);
 
+                // TODO: IMPROVE BY IMPLEMENTING LAPACK INVERSE
                 // Inverse Jacobian matrix
-                invJ = np.linalg.inv(J)
+                invMatrix2(J, invJ);
+                //printMatrix(invJ,2,2);
 
-                B = np.dot(invJ, GN)
+                // Calculating B = invJ * GN
+                cblas_dgemm(CblasRowMajor,CblasNoTrans,CblasNoTrans, 2, 4, 2, 1, invJ, 2, GN, 4, 0, B, 4);
+
+                //B = np.dot(invJ, GN)
+                //printMatrix(B,2,4);
 
                 // Ke = Ke + B'*D*B*th*DetJ*Wi*Wj
-                Ke = Ke + np.dot(np.dot(B.T, D), B) * th * DetJ * W[i] * W[j]
+                //Ke = Ke + np.dot(np.dot(B.T, D), B) * th * detJ * W[j] * W[k];
+
+                //Calculating C = B^T * D
+                cblas_dgemm(CblasRowMajor,CblasTrans,CblasNoTrans, 4, 2, 2, 1, B, 4, D, 2, 0, C, 2);
+                //printMatrix(C,4,2);
+
+                Ke_a = th * detJ * W[j] * W[k]; // BLAS alpha scalar to multiply with the matrix product
+
+                cblas_dgemm(CblasRowMajor,CblasNoTrans,CblasNoTrans, 4, 4, 2, Ke_a, C, 2, B, 4, 1, Ke, 4);
+            }
+        }
+        printMatrix(Ke,4,4);
+        //printMatrix(J,2,2);
+        cout << "-----------------------" << endl;
+        //printMatrix(gDof,1,4);
+
+        for (int j = 0; j < nnode_elem; j++){
+            for (int k = 0; k < nnode_elem; k++) {
+                K[nnode * gDof[j] + gDof[k]] += Ke[nnode_elem * j + k];
+                //cout << Ke[nnode_elem * j + k] << endl;
             }
         }
 
@@ -313,10 +357,29 @@ int main() {
 
     }
 
+    //printMatrix(K,nnode, nnode);
+
+
+
 
     return 0;
 }
 
+
+double detMatrix2(double* A){
+    double detJ;
+    detJ = A[3] * A[0] - A[2] * A[1];
+    return detJ;
+}
+
+
+void invMatrix2(double* J, double* invJ){
+    double detJ = detMatrix2(J);
+    invJ[0] = J[3] / detJ;
+    invJ[1] = -J[1] / detJ;
+    invJ[2] = -J[2] / detJ;
+    invJ[3] = J[0] / detJ;
+}
 
 void printVector(vector<double> Vector) {
     const int length = Vector.size();
@@ -371,7 +434,7 @@ void printMatrix(double* a, int M, int N){
             if ((j == 0) && (i > 0)){
                 cout << endl;
             }
-            cout << setw(5) << *(a + i * N + j);
+            cout << setw(8) << *(a + i * N + j);
 
         }
 

@@ -31,6 +31,8 @@ functional
 -
 algorithm
 -
+valarray
+-
 cblas.h
 /Users/birkulstad/hpc-exercises/hpcass/cblas.h
 

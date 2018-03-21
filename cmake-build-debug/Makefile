@@ -111,6 +111,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named helmholtz
+
+# Build rule for target.
+helmholtz: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 helmholtz
+.PHONY : helmholtz
+
+# fast build rule for target.
+helmholtz/fast:
+	$(MAKE) -f CMakeFiles/helmholtz.dir/build.make CMakeFiles/helmholtz.dir/build
+.PHONY : helmholtz/fast
+
+#=============================================================================
 # Target rules for targets named hpcass
 
 # Build rule for target.
@@ -158,6 +171,7 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
+	@echo "... helmholtz"
 	@echo "... hpcass"
 	@echo "... main.o"
 	@echo "... main.i"
