@@ -15,7 +15,7 @@ using namespace std;
 /* OPTIMISE: stuff that could be optimised
  * HELP: stuff I'm stuck on
  * IMPROVE: stuff that could be implemented in a more elegant/clear way
- *
+ * FIX: temporary bugs/problems that need fixing to progress
  *
  */
 
@@ -191,7 +191,7 @@ int main() {
         }
         //printArray(eNodes,4);
     }
-    //printMatrix(ElemY,50,4);
+    //printMatrix(ElemX,50,4);
 
     // ----- Generate global dof numbers -----------------
 
@@ -235,6 +235,83 @@ int main() {
     // ----- Conductivity matrix D  -----------
     double D[4] = {kx, kxy, kxy, ky};
     // ----------------------------------------
+    double Kp[nDof * nDof];  // Initiation of global stiffness matrix K
+    double Ke[nnode_elem * nnode_elem]; // Initialising element stiffness matrix Ke
+    double eCoord[nnode_elem * 2]; // For storing the node coordinates
+    double eX[nnode_elem]; // For storing the node x-coordinates
+    double eY[nnode_elem]; // For storing the node y-coordinates
+    double eta, xi; // Natural coordinates
+    double N[nnode_elem]; // Shape function matrix
+    double GN[2 * nnode_elem]; // Shape function derivative matrix
+    double J[gaussorder * gaussorder]; // Jacobian Matrix
+    double DetJ[gaussorder * gaussorder]; // For storing the determinants of J
+    double detJ; //Determinant of J
+    double invJ[gaussorder * gaussorder]; // Inverse Jacobian Matrix
+    double B[2 * nnode_elem]; // Some dot product IMPROVE
+
+
+
+
+
+    for (int i = 0; i < nelem; i++) {
+        // - data for element i
+        for (int k = 0; k < nnode_elem; k++){
+            eNodes[k] = ElemNode[(nnode_elem + 1) * i + k + 1]; // Associated element nodes
+            p = eNodes[k] % (nelem_y + 1);                                  // Row number
+            q = (eNodes[k] - (eNodes[k] % (nelem_y + 1))) / (nelem_y + 1);  // Column number
+            eCoord[2 * k + 0] = X[(nelem_x + 1) * p + q];  // node x-coordinates
+            eCoord[2 * k + 1] = Y[(nelem_x + 1) * p + q];  // node y-coordinates
+        }
+
+
+        double gDof[nnode_elem] = {0}; // used to construct scatter matrix
+
+        for (int j = 0; j < nnode_elem; j++) {
+            // global dof for node j gathered in element gDof OPTIMISE: gDof == eNodes
+            // potential simplification as per above, could have unknown effects in different cases
+            gDof[j] = globDof[2 * eNodes[j] + 1];
+
+            eX[j] = eCoord[j + 0]; // Node x-coordinates
+            eY[j] = eCoord[j + 1]; // Node y-coordinates
+        }
+
+
+        // ----- Element stiffness matrix, Ke, found by Gauss integration -----------
+
+        for (int j = 0; j < gaussorder; j++){
+            for (int k = 0; k < gaussorder; k++){
+                eta = GP[i];
+                xi = GP[j];
+
+                // FIX elegant way to assign N, GN etc without allocating new memory every time
+                // maybe define N1, N2 etc and assign to N
+                // shape functions matrix
+                N = {0.25 * (1 - xi) * (1 - eta), 0.25 * (1 + xi) * (1 - eta),
+                        0.25 * (1 + xi) * (1 + eta), 0.25 * (1 - xi) * (1 + eta)};
+
+                // derivative (gradient) of the shape functions
+                GN = {0.25 * -(1 - eta), 0.25 * (1 - eta), 0.25 * (1 + eta), 0.25 * -(1 + eta),
+                0.25 * -(1 - xi), 0.25 * -(1 + xi), 0.25 * (1 + xi), 0.25 * (1 - xi)};
+
+                // Jacobian matrix
+                J = np.dot(GN, eCoord)
+
+                // Jacobian determinant
+                DetJ = np.linalg.det(J)
+
+                // Inverse Jacobian matrix
+                invJ = np.linalg.inv(J)
+
+                B = np.dot(invJ, GN)
+
+                // Ke = Ke + B'*D*B*th*DetJ*Wi*Wj
+                Ke = Ke + np.dot(np.dot(B.T, D), B) * th * DetJ * W[i] * W[j]
+            }
+        }
+
+
+
+    }
 
 
     return 0;
