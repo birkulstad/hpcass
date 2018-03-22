@@ -31,13 +31,18 @@ void printArray(int*, int);
 void printMatrix(double*, int, int);
 void printMatrix(int*, int, int);
 
+void printValarray(const valarray<double>& , int );
+
 double detMatrix2(double*);
 void invMatrix2(double*, double*);
 
 int getInd_i(int, int);
 int getInd_j(int, int);
 
-
+// TODO: IMPLEMENT COMMAND LINE INPUT
+//  int argc, char* argv[] inside main()
+// a = &argv[1]; //starts at 1
+// argc checks correct number of inputs
 int main() {
 // ----- Defining Materials -----------------
     const double kx = 250.0;  // Thermal conductivity [W/mK]
@@ -351,6 +356,7 @@ int main() {
         //cout << "-----------------------" << endl;
         //printMatrix(gDof,1,4);
 
+        // Adding element stiffness matrices Ke to the global stiffness matrix K
         for (int j = 0; j < nnode_elem; j++){
             for (int k = 0; k < nnode_elem; k++) {
                 K[nnode * gDof[j] + gDof[k]] += Ke[nnode_elem * j + k];
@@ -370,7 +376,7 @@ int main() {
     // Compute nodal boundary flux vector --- natural B.C
     //  Defined on edges
     int q_edge; // Which edge the heat flux is applied to 0 = left, 1 = top, 2 = right, 3 = bottom
-    int mult_i, j;
+    int mult_i, mult_j;
     int nFluxNodes = 0; // Number of nodes on the edge of the beam
 
     //IMPROVE: Add command line input check and error message for default case
@@ -380,25 +386,25 @@ int main() {
         // Left edge
         case 0: nFluxNodes = nelem_y + 1;
                 mult_i = (nelem_x + 1);
-                j = 0;
+                mult_j = 0;
                 break;
 
         // Top edge
         case 1: nFluxNodes = nelem_x + 1;
                 mult_i = 1;
-                j = 0;
+                mult_j = 0;
                 break;
 
         // Right edge
         case 2: nFluxNodes = nelem_y + 1;
                 mult_i = (nelem_x + 1);
-                j = nelem_x;
+                mult_j = nelem_x;
                 break;
 
         // Bottom edge
         case 3: nFluxNodes = nelem_x + 1;
                 mult_i = 1;
-                j = (nelem_x + 1) * nelem_y;
+                mult_j = (nelem_x + 1) * nelem_y;
                 break;
 
         default: cout << "Error! Choose a value between 0 and 3 corresponding to the edge with heat flux!" << endl;
@@ -412,7 +418,7 @@ int main() {
     //cout << nFluxNodes << endl;
 
     for (int i = 0; i < nFluxNodes; i++){
-        fluxNodes[i] = NodeTopo[mult_i * i + j];
+        fluxNodes[i] = NodeTopo[mult_i * i + mult_j];
     }
 
     //printMatrix(fluxNodes,1,nFluxNodes);
@@ -438,7 +444,7 @@ int main() {
     printMatrix(Y,nelem_y+1,nelem_x+1);
 
     // --------------- Calculate Nodal Flux Vector f -------------------
-
+    // FIX: Python wants f to be initialised as nDof, but apparently nDof changes?
     double f[nnode] = {0};  // initialize nodal flux vector
     int node1; // first node
     int node2; // second node
@@ -481,10 +487,10 @@ int main() {
             vN = {1 - xi, 1 + xi};
             vN *= 0.5;
             for (int l = 0; l < sqrt(nnode_elem); l++ ){N[l] = vN[l];};
-            printMatrix(N,1,2);
+            //printMatrix(N,1,2);
 
             flux = cblas_ddot(sqrt(nnode_elem), N, 1, n_bce, 1);
-            cout << flux << endl;
+            //cout << flux << endl;
             // CBLAS to perform fq += fq + N.T * flux * detJ * th * W[j];  // nodal flux
             cblas_daxpy(sqrt(nnode_elem), flux * detJ * th * W[j], N, 1, fq, 1);
 
@@ -500,9 +506,223 @@ int main() {
         f[node2] += fq[1];
 
     }
+    // Release memory from the heap
+    delete[] fluxNodes;
+    delete[] n_bc;
+
     //printMatrix(f, 1, nnode);
 
-    
+
+
+    // ----- Apply boundary conditions ----------------- Essential B.C.
+    int T_edge; // Which edge the constant Temp is applied to 0 = left, 1 = top, 2 = right, 3 = bottom
+    int nTempNodes = 0; // Number of nodes on the edge of the beam
+    double T0 = 10;  // Temperature at boundary
+
+    //IMPROVE: Add check to ensure user input does not select same edge for q and T
+
+    T_edge = 0;
+    switch (T_edge){
+        // Left edge
+        case 0: nTempNodes = nelem_y + 1;
+            mult_i = (nelem_x + 1);
+            mult_j = 0;
+            break;
+
+            // Top edge
+        case 1: nTempNodes = nelem_x + 1;
+            mult_i = 1;
+            mult_j = 0;
+            break;
+
+            // Right edge
+        case 2: nTempNodes = nelem_y + 1;
+            mult_i = (nelem_x + 1);
+            mult_j = nelem_x;
+            break;
+
+            // Bottom edge
+        case 3: nTempNodes = nelem_x + 1;
+            mult_i = 1;
+            mult_j = (nelem_x + 1) * nelem_y;
+            break;
+
+        default: cout << "Error! Choose a value between 0 and 3 corresponding to the edge with heat flux!" << endl;
+            cout << "0 = left, 1 = top, 2 = right, 3 = bottom" << endl;
+    }
+
+    // Initialise fluxNodes with size appropriate to the edge selected
+    int* tempNodes = new int[nTempNodes];
+
+
+    printMatrix(NodeTopo,6,11);
+    //cout << nFluxNodes << endl;
+
+    for (int i = 0; i < nTempNodes; i++){
+        tempNodes[i] = NodeTopo[mult_i * i + mult_j];
+    }
+
+    //FIX: search for new and ensure all variables initialised on the heap are deleted when appropriate
+
+    double* BC = new double[nTempNodes * 2];
+
+    for (int i = 0; i < nTempNodes; i++) {
+        BC[2 * i + 0] = tempNodes[i];
+        BC[2 * i + 1] = T0;
+    }
+
+    //printMatrix(BC,nTempNodes,2);
+
+    // ----- Assembling global "Force" vector ------------
+    // FIX: Python wants OrgDof and T to be initialised as nDof, but apparently nDof changes?
+    int OrgDof[nnode] = {0};
+    double T[nnode] = {0}; // initialize nodal temperature vector
+    int rDof = nnode;  // Reduced number of DOF
+    //print(rDof)
+
+    //int ind = BC[:, 0].astype(int) //same as tempNodes array
+    for (int i = 0; i < nTempNodes; i++){
+        OrgDof[tempNodes[i]] = -1;
+        T[tempNodes[i]] = BC[2 * i + 1];
+        //cout << T[i] << endl;
+    }
+    rDof = rDof - nTempNodes;
+
+    //printMatrix(OrgDof,1,nnode);
+
+    //FIX: Is any of this block necessary?
+    //OrgDof[ind] = -1
+    //T[ind] = BC[:, 1]
+    //rDof = rDof - nTempNodes;
+    //print(rDof)
+
+    //cout << rDof << endl;
+
+    //FIX: Is any of this block necessary?
+    /*
+    int RedDof[rDof];
+    printMatrix(RedDof,1,rDof);
+    int counter1 = 0;
+    for (int i = 0; i < nnode; i++) {
+        RedDof[i] = 0;
+        if (OrgDof[i] == 0) {
+            OrgDof[j] = counter1;
+            RedDof[counter1] = j;
+            counter1 += 1;
+        }
+    }
+    */
+
+    //printMatrix(T,1,nnode);
+
+    // IMPROVE: Could elementwise operations using valarrays be used to do masking more efficiently than loops?
+    /*
+    valarray <double> asdf = {2, 4, 6, 8};
+    valarray <double> resulttt;
+    resulttt = asdf * asdf;
+    printValarray(resulttt,4);
+    */
+
+    // --------------------- Partition matrices ----------------------------
+
+    //mask_E = np.array([(i in TempNodes) for i in range(len(T))])  // known temperature Dof
+
+    int mask_E[nnode] = {0}; // known temperature Dof
+    double T_E[nTempNodes]; // known values of T
+    double T_F[nnode-nTempNodes]; // unknown values of T
+    double f_E[nTempNodes]; // unknown values of f
+    double f_F[nnode - nTempNodes]; // known f-values
+
+
+    // Creating mask array for known values. Known -> entry = 1
+    for (int i = 0; i < nTempNodes; i++){
+        mask_E[tempNodes[i]] = 1;
+    }
+
+    //printMatrix(mask_E,1,66);
+
+    // IMPROVE: Perform this in a different manner?
+    int counter1 = 0;
+    int counter2 = 0;
+    int counter3 = 0;
+    for (int i = 0; i < nnode; i++){
+        if (T[i] != 0){
+            T_E[counter1] = T[i];
+            counter1++;
+        }
+        else {f_F[counter2] = f[i]; counter2++;}
+    }
+    //printMatrix(T_E,1,nTempNodes);
+    //printMatrix(f_F,1,nnode-nTempNodes);
+
+    // Initialising partition matrices
+    double K_EE[nTempNodes * nTempNodes];
+    double K_EF[nTempNodes * (nnode - nTempNodes)];
+    double K_FF[(nnode - nTempNodes) * (nnode - nTempNodes)];
+
+    counter1 = 0;
+    counter2 = 0;
+    counter3 = 0;
+    for (int j = 0; j < nnode; j++){
+        for (int k = 0; k < nnode; k++) {
+            if ((mask_E[j] == 1) && (mask_E[k] == 1)){
+                K_EE[counter1] = K[nnode * j + k];
+                counter1++;
+            }
+            else if ((mask_E[j] == 1) && (mask_E[k] != 1)){
+                K_EF[counter2] = K[nnode * j + k];
+                counter2++;
+            }
+            else if ((mask_E[j] != 1) && (mask_E[k] != 1)){
+                K_FF[counter3] = K[nnode * j + k];
+                counter3++;
+
+            }
+        }
+    }
+    //printMatrix(K,nnode,nnode);
+    //printMatrix(K_EE,nTempNodes,nTempNodes);
+    //printMatrix(K_EF,nTempNodes,(nnode - nTempNodes));
+    //printMatrix(K_FF,(nnode - nTempNodes),(nnode - nTempNodes));
+
+    // TODO: Implement LAPACK solver for this block
+    /*
+    // solve for d_F
+    rhs = f_F - np.dot(K_EF.T, T_E)
+    T_F = np.linalg.solve(K_FF, rhs)
+    T_F;
+    */
+
+    // compute the reaction f_E
+    double f_E1[nTempNodes];
+
+
+    // Calculating f_E = np.dot(K_EE, T_E) + np.dot(K_EF, T_F)
+
+    // Calculating f_E = K_EE * T_E
+    cblas_dgemv(CblasRowMajor, CblasNoTrans, nTempNodes, nTempNodes, 1, K_EE, nTempNodes, T_E, 1, 0, f_E, 1);
+    printMatrix(f_E,1,nTempNodes);
+    // Calculating f_E1 = K_EF * T_F
+    cblas_dgemv(CblasRowMajor, CblasNoTrans, nTempNodes, nnode - nTempNodes, 1, K_EF, nTempNodes, T_F, 1, 0, f_E1, 1);
+
+    // Calculating f_E = f_E + f_E1
+    cblas_daxpy(nTempNodes,1,f_E1,1,f_E,1);
+
+    counter1 = 0;
+    counter2 = 0;
+    for (int i = 0; i < nnode; i++) {
+        if (mask_E[i] == 1) {
+            T[i] = T_E[counter1];
+            f[i] = f_E[counter1];
+            counter1++;
+        }
+        else {
+            T[i] = T_F[counter2];
+            f[i] = f_F[counter2];
+        }
+    }
+    //printMatrix(T,1,nnode);
+    //printMatrix(f,1,nnode);
 
     return 0;
 }
@@ -610,4 +830,14 @@ void printMatrix(int* a, int M, int N){
 
     }
     cout << "]" << endl;
+}
+
+void printValarray (const valarray<double>& va, int num) {
+    for (int i=0; i<va.size()/num; i++) {
+        for (int j=0; j<num; j++) {
+            cout << va[i*num+j] << ' ';
+        }
+        cout << endl;
+    }
+    cout << endl;
 }
