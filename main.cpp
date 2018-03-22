@@ -1,6 +1,4 @@
 #include <iostream>
-#include <stdio.h>
-#include <string.h>
 #include <cstdlib>
 #include <cmath>
 #include <ctime>
@@ -32,15 +30,8 @@ using namespace std;
 
 
 //Declaring function prototypes
-void printVector(vector<double>);
-void printVector(vector<int>);
-
-void printArray(double*, int);
-void printArray(int*, int);
 void printMatrix(double*, int, int);
 void printMatrix(int*, int, int);
-
-void printValarray(const valarray<double>& , int );
 
 double detMatrix2(double*);
 void invMatrix2(double*, double*);
@@ -52,39 +43,47 @@ int getInd_j(int, int);
 //  int argc, char* argv[] inside main()
 // a = &argv[1]; //starts at 1
 // argc checks correct number of inputs
+
 int main() {
-// ----- Defining Materials -----------------
-    const double kx = 250.0;  // Thermal conductivity [W/mK]
-    const double ky = 250.0;  // Thermal conductivity [W/mK]
-    const double kxy = 0.0;  // Thermal conductivity [W/mK]
+    // --------------- Case Constants -----------------
+    // Remove this block once the command line input is enabled
+    //      case[] = {a, h1, h2, L, tp, nelem_x, nelem_y,kx, ky, kxy, T_edge, q_edge, T0, q0};
+    //const double caseval[] = {0, 1, 1, 2, 0.2, 10, 5, 250, 250, 0, 0, 2, 10, 2500}; //case1
+    //const double caseval[] = {0, 1, 1, 2, 0.2, 10, 5, 250, 250, 0, 3, 1, 10, 2500}; //case2
+    //const double caseval[] = {0.25, 1, 1.3, 3, 0.2, 15, 8, 250, 250, 0, 0, 3, -20, -5000}; //case3
 
-// ----- Defining Section -----------------
-    const double th = .2;  // Thickness [m]
 
-// ----- Integration scheme -----------------
+
+    // ----- Defining Materials -----------------
+    const double kx = caseval[7];  // Thermal conductivity [W/mK]
+    const double ky = caseval[8];  // Thermal conductivity [W/mK]
+    const double kxy = caseval[9];  // Thermal conductivity [W/mK]
+
+    // ----- Defining Section -----------------
+    const double th = caseval[4];  // Thickness [m]
+
+    // ----- Integration scheme -----------------
     const int gaussorder = 2;
 
-// ----- Defining Geometry -----------------
+    // ----- Defining Geometry -----------------
     // h = a * x**2 + b * x + h1:    Beam height as a function of x
-    const double a = 0; // constant in the polynomial describing the beam height
-    const double h1 = 1;  // [m] Height at beam left edge
-    const double h2 = h1 * 1; // [m] Height at beam right edge
-    const double L = 2 * h1;  // [m] Beam length
+    const double a = caseval[0]; // constant in the polynomial describing the beam height
+    const double h1 = caseval[1];  // [m] Height at beam left edge
+    const double h2 = h1 * caseval[2]; // [m] Height at beam right edge
+    const double L = h1 * caseval[3];  // [m] Beam length
 
-// calculate b constant in the polynomial describing the beam height
+    // calculate b constant in the polynomial describing the beam height
     const double b = -a * L + (h2 - h1) / L;
 
-// ----- Meshing Geometry -----------------
-    const int nelem_x = 10;  // Number of elements in the x-direction
-    const int nelem_y = 5;  // Number of elements in y-direction
+    // ----- Meshing Geometry -----------------
+    const int nelem_x = caseval[5];  // Number of elements in the x-direction
+    const int nelem_y = caseval[6];  // Number of elements in y-direction
+    const int nnode_x = nelem_x + 1; // Number of nodes in the x-direction
+    const int nnode_y = nelem_y + 1; // Number of nodes in the y-direction
 
     const int nnode_elem = 4;  // number of nodes in each element
 
-    // IMPROVE: Replace nelem_y + 1 with nnodey and same with nelem_x
-
-    //OPTIMISE:
-    // nNodeDof[nnode_elem] = {1, 1, 1, 1};
-    //double neDof = cblas_dasum(nnode_elem,nNodeDof,1);
+    // IMPROVE: Replace nelem_y + 1 with nnode_y and same with nelem_x
 
     int nNodeDof[nnode_elem] = {1, 1, 1, 1};
     int neDof = 0;
@@ -92,59 +91,52 @@ int main() {
         neDof += i;
     }
 
-
-    //const vector<int> nNodeDof(nnode_elem, 1);
-    //const int neDof = accumulate(nNodeDof.begin(), nNodeDof.end(), 0);
-
-
-    //printVector(nNodeDof);
-    //cout << neDof << endl;
-
-// Calculatations
+    // Basic definition calculations
     const int nelem = nelem_x * nelem_y;  // Total number of elements
     const int nnode = (nelem_x + 1) * (nelem_y + 1);  // Total number of nodes
 
-// ----- Calculation of Nodal coordinate matrix -> Coord ---------
-    // h(x) = a * x**2 + b * x + h1  # Beam height as a function of x
-    //OPTIMISE: Create linspace-function and implement where needed
+    // ----- Calculation of Nodal coordinate matrix -> Coord ---------
+    // h(x) = a * x**2 + b * x + h1  // Plate height as a function of x
+
+    // OPTIMISE: Create linspace-function and implement where needed
     double x[nelem_x + 1];
-    //Distribute length of L over number of nodes (linspace)
+
+    // Distribute length of L over number of nodes (linspace)
     for (int i = 0; i < nelem_x + 1; i++) {
         x[i] = (L - 0) / (nelem_x) * i;
     }
-
-    //cout << x << endl;
     //printArray(x, nelem_x + 1);
 
-    //double xsq[nelem_x];
-    //creating x^2 array
+
+    // Creating x^2 array
     double xsq[nelem_x + 1];
     for (int i = 0; i < nelem_x + 1; i++) {
         *(xsq + i) = x[i] * x[i];
     }
 
-    //calculating h = a * x^2 + b * x + h1
+    // Calculating h = a * x^2 + b * x + h1
     double h[nelem_x + 1];
 
     for (double &i : h) {
         i = h1;
     }
     //printArray(h,nelem_x + 1);
+
     cblas_dscal(nelem_x + 1, a, xsq, 1);    //multiply x^2 by a -> x2
     //printArray(xsq,nelem_x + 1);
+
     cblas_daxpy(nelem_x + 1, b, x, 1, xsq, 1); //multiply x by b and add x^2 + a
     //printArray(xsq,nelem_x + 1);
+
     cblas_daxpy(nelem_x + 1, 1, xsq, 1, h, 1);
     //printArray(h, nelem_x + 1);
 
-    //double h[nelem_x];
-    //double h = a * xsq + b * x + h1
-
     //OPTIMISE: If h is constant (i.e. a and b are zero), Y can be stored as y
 
-    //Defining matrix Y of Y-coordinates for each node
-    //Defining matrix Coord of [x,y] pairs for each node
-    //Calculation of topology matrix NodeTopo
+    // Defining matrix Y of Y-coordinates for each node
+    // Defining matrix X of X-coordinates for each node
+    // Defining matrix Coord of [x,y] pairs for each node
+    // Calculation of topology matrix NodeTopo
     double X[(nelem_x + 1) * (nelem_y + 1)];
     double Y[(nelem_x + 1) * (nelem_y + 1)];
     double Coord[(nelem_x + 1) * (nelem_y + 1) * 2];
@@ -156,11 +148,6 @@ int main() {
             X[(nelem_x + 1) * i + j] = x[j];
             Y[(nelem_x + 1) * i + j] = h[j] / (nelem_y) * i - h[j] / 2;
             NodeTopo[(nelem_x + 1) * i + j] = (nelem_y + 1) * j + i;
-            //cout << "i,j = " << i << "," << j << "y,h=" << y[i] << "," << h[j] << "Y=" << Y[nelem_y * i + j] << endl;
-            Coord[2 * ((nelem_x + 1) * i + j) + 0] = x[j];
-            Coord[2 * ((nelem_x + 1) * i + j) + 1] = h[j] / (nelem_y) * i - h[j] / 2;
-            //cout << "i,j = " << i << "," << j << "    x,y = " << Coord[2 * (nelem_y * i + j) + 0] << "," << Coord[2 * (nelem_y * i + j) + 1] << "    Y = " << Y[nelem_y * i + j] << endl;
-            //cout << (nelem_y + 1) * j + i << endl;
         }
     }
     //printMatrix(Coord,(nelem_x + 1) * (nelem_y + 1) , 2);
@@ -175,10 +162,10 @@ int main() {
         for (int j = 0; j < nelem_y + 1; j++) {
             if ((i < nelem_x) && (j < nelem_y)) {
                 ElemNode[5 * (nelem_y * i + j) + 0] = elemnr;    //Element number ID
-                ElemNode[5 * (nelem_y * i + j) + 1] = NodeTopo[((nelem_x + 1) * j + i)]; //Upper left node ID
-                ElemNode[5 * (nelem_y * i + j) + 2] = NodeTopo[((nelem_x + 1) * j + i + 1)]; //Upper right node ID
-                ElemNode[5 * (nelem_y * i + j) + 3] = NodeTopo[((nelem_x + 1) * (j + 1) + i + 1)]; //Lower right node ID
-                ElemNode[5 * (nelem_y * i + j) + 4] = NodeTopo[((nelem_x + 1) * (j + 1) + i)]; //Lower left node ID
+                ElemNode[5 * (nelem_y * i + j) + 1] = NodeTopo[((nelem_x + 1) * j + i)];            //Upper left node ID
+                ElemNode[5 * (nelem_y * i + j) + 2] = NodeTopo[((nelem_x + 1) * j + i + 1)];        //Upper right node ID
+                ElemNode[5 * (nelem_y * i + j) + 3] = NodeTopo[((nelem_x + 1) * (j + 1) + i + 1)];  //Lower right node ID
+                ElemNode[5 * (nelem_y * i + j) + 4] = NodeTopo[((nelem_x + 1) * (j + 1) + i)];      //Lower left node ID
                 elemnr += 1;
             }
         }
@@ -187,56 +174,24 @@ int main() {
     //printMatrix(ElemNode,nelem_x * nelem_y,nnode_elem + 1);
     //printMatrix(NodeTopo,nelem_y + 1,nelem_x + 1);
 
-    double ElemX[(nelem_x * nelem_y) * (nnode_elem)]; // Element nodal x-coordinates
-    double ElemY[(nelem_x * nelem_y) * (nnode_elem)]; // Element nodal y-coordinates
-    int eNodes[nnode_elem];
-    int p, q;   // Nodal indices (for a row-major eg. X or Y representation)
-                // calculated for each node associated with an element
-
-    //int s[] = {nelem_y+1,1}; //stride for X stored in column-major format
-    //X(i,j) = *X+i*s[0]+j*s[1]
+    // ----- Generate global dof numbers -----------------
+    int eNodes[nnode_elem];         // Nodes associated with a given element
+    int globDof[nnode * 2]={0};     // List of [number of Dof for node, global Dof]
 
     for (int i = 0; i < nelem; i++){
         for (int k = 0; k < nnode_elem; k++) {
-            eNodes[k] = ElemNode[(nnode_elem + 1) * i + k + 1]; // Associated element nodes
-            // Calculating indices (i,j)=(p,q) to obtain (x,y)-coordinates from X and Y
-            // Note that p and q are calculated bearing in mind NodeTopo numbering of nodes
-            // TODO: Replace p and q with getInd_i and getInd_j
-            // ElemX and ElemY are incorrect for case 3, but turn out to not be used elsewhere in the script...
-            /*
-            p = eNodes[k] % (nelem_y + 1);  // Row number
-            q = (eNodes[k] - (eNodes[k] % (nelem_y + 1))) / (nelem_y + 1); // Column number
-            //cout << "p,q = " << p << "," << q << "    np+q = " << (nelem_x + 1) * p + q << "    X[] = " << X[(nelem_x + 1) * p + q] << endl;
-            ElemX[(nnode_elem) * i + k] = X[(nelem_x + 1) * p + q];
-            ElemY[(nnode_elem) * i + k] = Y[(nelem_x + 1) * p + q];
-            */
+            eNodes[k] = ElemNode[(nnode_elem + 1) * i + k + 1];
+            if (globDof[2 * eNodes[k]] < nNodeDof[k]) {
+                globDof[2 * eNodes[k]] = nNodeDof[k];
+            }
         }
         //printArray(eNodes,4);
     }
-    //printMatrix(ElemY,(nelem_x * nelem_y) , (nnode_elem));
-
-    // ----- Generate global dof numbers -----------------
-
-    int globDof[nnode * 2]={0};
-    int nNode;
-
-    for (int i = 0; i < nelem; i++){
-        for (int k = 0; k < nnode_elem; k++) {
-            nNode = ElemNode[(nnode_elem + 1) * i + k + 1];
-            // if the already existing ndof of the present node is less than
-            // the present elements ndof then replace the ndof for that node]
-
-            if (globDof[2 * nNode] < nNodeDof[k]) {
-                globDof[2 * nNode] = nNodeDof[k];
-            }
-        }
-    }
     //printMatrix(globDof,nnode,2);
-    //printArray(nNodeDof,nnode_elem);
 
-    // counting the global dofs and inserting in globDof
-    int nDof = 0;
-    int eDof = 0;
+    // Counting the global dofs and inserting in globDof
+    int nDof = 0; // Number of dof for a given node
+    int eDof = 0; // Number of
     for (int i = 0; i < nnode; i++) {
         eDof = globDof[2 * i];
         for (int j = 0; j < eDof; j++) {
@@ -244,7 +199,6 @@ int main() {
             nDof += 1;
         }
     }
-    //printMatrix(globDof,nnode,2);
     //printMatrix(globDof,nnode,2);
 
     // Assembly of global stiffness matrix K -------------
@@ -280,6 +234,7 @@ int main() {
     double C[nnode_elem * 2]; // Some dot product IMPROVE
     double Ke_a;
 
+    int p, q;
 
     for (int i = 0; i < nelem; i++) {
         // - data for element i
@@ -391,7 +346,7 @@ int main() {
 
     //IMPROVE: Add command line input check and error message for default case
 
-    q_edge = 1;
+    q_edge = caseval[11];
     switch (q_edge){
         // Left edge
         case 0: nFluxNodes = nelem_y + 1;
@@ -436,7 +391,7 @@ int main() {
 
 
     // ----- Defining load ----------------------------
-    double q_flux = 2500;  // Constant flux at right edge of the beam
+    double q_flux = caseval[13];  // Constant flux at right edge of the beam
     int nbe = nFluxNodes - 1;  // Number of elements with flux load
 
     // Element boundary condition
@@ -528,11 +483,11 @@ int main() {
     // ----- Apply boundary conditions ----------------- Essential B.C.
     int T_edge; // Which edge the constant Temp is applied to 0 = left, 1 = top, 2 = right, 3 = bottom
     int nTempNodes = 0; // Number of nodes on the edge of the beam
-    double T0 = 10;  // Temperature at boundary
+    double T0 = caseval[12];  // Temperature at boundary
 
     //IMPROVE: Add check to ensure user input does not select same edge for q and T
 
-    T_edge = 3;
+    T_edge = caseval[10];
     switch (T_edge){
         // Left edge
         case 0: nTempNodes = nelem_y + 1;
@@ -789,49 +744,6 @@ void invMatrix2(double* J, double* invJ){
     invJ[3] = J[0] / detJ;
 }
 
-void printVector(vector<double> Vector) {
-    const int length = Vector.size();
-    cout << "[";
-    for (int i = 0; i < length; i++) {
-        cout << Vector[i];
-        if (i < length - 1){
-            cout << ", ";
-        }
-    }
-    cout << "]" << endl;
-}
-
-void printVector(vector<int> Vector) {
-    const int length = Vector.size();
-    cout << "[";
-    for (int i = 0; i < length; i++) {
-        cout << Vector[i] << ", ";
-    }
-    cout << "]" << endl;
-}
-
-void printArray(double* a, int length){
-    cout << "[";
-    for (int i = 0; i < length; i++){
-        cout << setw(5) << *(a+i);
-        if (i < length - 1){
-            cout << ", ";
-        };
-    }
-    cout << "]" << endl;
-}
-
-void printArray(int* a, int length){
-    cout << "[";
-    for (int i = 0; i < length; i++){
-        cout << setw(5) << *(a+i);
-        if (i < length - 1){
-            cout << ", ";
-        };
-    }
-    cout << "]" << endl;
-}
-
 void printMatrix(double* a, int M, int N){
     cout << "[";
     for (int i = 0; i < M; ++i){
@@ -866,14 +778,4 @@ void printMatrix(int* a, int M, int N){
 
     }
     cout << "]" << endl;
-}
-
-void printValarray (const valarray<double>& va, int num) {
-    for (int i=0; i<va.size()/num; i++) {
-        for (int j=0; j<num; j++) {
-            cout << va[i*num+j] << ' ';
-        }
-        cout << endl;
-    }
-    cout << endl;
 }
