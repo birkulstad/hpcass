@@ -15,13 +15,17 @@ openblas_config.h
 /Users/birkulstad/hpc-exercises/hpcass/main.cpp
 iostream
 -
-cstdlib
--
 cmath
 -
-ctime
--
 iomanip
+-
+valarray
+-
+fstream
+-
+cblas.h
+/Users/birkulstad/hpc-exercises/hpcass/cblas.h
+cstdlib
 -
 vector
 -
@@ -31,10 +35,8 @@ functional
 -
 algorithm
 -
-valarray
+ctime
 -
-cblas.h
-/Users/birkulstad/hpc-exercises/hpcass/cblas.h
 
 /Users/birkulstad/hpc-exercises/hpcass/openblas_config.h
 stdio.h

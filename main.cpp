@@ -1,14 +1,16 @@
 #include <iostream>
-#include <cstdlib>
 #include <cmath>
-#include <ctime>
 #include <iomanip>
+#include <valarray>
+#include <fstream>
+#include "cblas.h"
+
+#include <cstdlib>
 #include <vector>
 #include <numeric>
 #include <functional>
 #include <algorithm>
-#include <valarray>
-#include "cblas.h"
+#include <ctime>
 
 #define F77NAME(x) x##_
 extern "C" {
@@ -20,14 +22,12 @@ extern "C" {
 
 using namespace std;
 
-/* OPTIMISE: stuff that could be optimised
+/*
+ * OPTIMISE: stuff that could be optimised
  * HELP: stuff I'm stuck on
  * IMPROVE: stuff that could be implemented in a more elegant/clear way
  * FIX: temporary bugs/problems that need fixing to progress
- *
  */
-
-
 
 //Declaring function prototypes
 void printMatrix(double*, int, int);
@@ -39,12 +39,16 @@ void invMatrix2(double*, double*);
 int getInd_i(int, int);
 int getInd_j(int, int);
 
+void WriteVtkFile(int, int, int, double* , int* , double* );
+
 // TODO: IMPLEMENT COMMAND LINE INPUT
 //  int argc, char* argv[] inside main()
 // a = &argv[1]; //starts at 1
 // argc checks correct number of inputs
 
 int main() {
+    // IMPROVE: Diagonalise K-matrix
+
     // --------------- Case Constants -----------------
     // Remove this block once the command line input is enabled
     //      case[] = {a, h1, h2, L, tp, nelem_x, nelem_y,kx, ky, kxy, T_edge, q_edge, T0, q0};
@@ -55,8 +59,8 @@ int main() {
     // FIX: Setting matrices to 0 at initialisation, so 0 entries are in fact zero if possible
 
     // ----- Defining Materials -----------------
-    const double kx = caseval[7];  // Thermal conductivity [W/mK]
-    const double ky = caseval[8];  // Thermal conductivity [W/mK]
+    const double kx = caseval[7];   // Thermal conductivity [W/mK]
+    const double ky = caseval[8];   // Thermal conductivity [W/mK]
     const double kxy = caseval[9];  // Thermal conductivity [W/mK]
 
     // ----- Defining Section -----------------
@@ -66,13 +70,13 @@ int main() {
     const int gaussorder = 2;
 
     // ----- Defining Geometry -----------------
-    // h = a * x**2 + b * x + h1:    Beam height as a function of x
-    const double a = caseval[0]; // constant in the polynomial describing the beam height
-    const double h1 = caseval[1];  // [m] Height at beam left edge
-    const double h2 = h1 * caseval[2]; // [m] Height at beam right edge
-    const double L = h1 * caseval[3];  // [m] Beam length
+    // h = a * x**2 + b * x + h1:    Plate height h as a function of x
+    const double a = caseval[0]; // constant in the polynomial describing the plate height
+    const double h1 = caseval[1];  // [m] Height at plate left edge
+    const double h2 = h1 * caseval[2]; // [m] Height at plate right edge
+    const double L = h1 * caseval[3];  // [m] Plate length
 
-    // calculate b constant in the polynomial describing the beam height
+    // calculate b constant in the polynomial describing the plate height
     const double b = -a * L + (h2 - h1) / L;
 
     // ----- Meshing Geometry -----------------
@@ -81,92 +85,93 @@ int main() {
     const int nnode_x = nelem_x + 1; // Number of nodes in the x-direction
     const int nnode_y = nelem_y + 1; // Number of nodes in the y-direction
 
-    const int nnode_elem = 4;  // number of nodes in each element
-
-    // IMPROVE: Replace nelem_y + 1 with nnode_y and same with nelem_x
-    int nNodeDof[nnode_elem] = {1, 1, 1, 1};
-    int neDof = 0;
-    for (int i : nNodeDof) {
-        neDof += i;
-    }
+    const int nnode_elem = 4;  // Number of nodes in each element (Quadrilateral)
+    int nNodeDof[nnode_elem] = {1, 1, 1, 1}; // Degrees of freedom per node
 
     // Basic definition calculations
     const int nelem = nelem_x * nelem_y;  // Total number of elements
-    const int nnode = (nelem_x + 1) * (nelem_y + 1);  // Total number of nodes
+    const int nnode = nnode_x * nnode_y;  // Total number of nodes
 
     // ----- Calculation of Nodal coordinate matrix -> Coord ---------
-    // h(x) = a * x**2 + b * x + h1  // Plate height as a function of x
+    // h(x) = a * x**2 + b * x + h1  // beam height as a function of x
 
     // OPTIMISE: Create linspace-function and implement where needed
-    double x[nelem_x + 1];
+    double x[nnode_x];
 
     // Distribute length of L over number of nodes (linspace)
-    for (int i = 0; i < nelem_x + 1; i++) {
+    for (int i = 0; i < nnode_x; i++) {
         x[i] = (L - 0) / (nelem_x) * i;
     }
-    //printArray(x, nelem_x + 1);
+    //printArray(x, nnode_x);
 
 
     // Creating x^2 array
-    double xsq[nelem_x + 1];
-    for (int i = 0; i < nelem_x + 1; i++) {
+    double xsq[nnode_x];
+    for (int i = 0; i < nnode_x; i++) {
         *(xsq + i) = x[i] * x[i];
     }
 
     // Calculating h = a * x^2 + b * x + h1
-    double h[nelem_x + 1];
+    double h[nnode_x];
 
     for (double &i : h) {
         i = h1;
     }
-    //printArray(h,nelem_x + 1);
+    //printArray(h,nnode_x);
 
-    cblas_dscal(nelem_x + 1, a, xsq, 1);    //multiply x^2 by a -> x2
-    //printArray(xsq,nelem_x + 1);
+    cblas_dscal(nnode_x, a, xsq, 1);    //multiply x^2 by a -> x2
+    //printArray(xsq,nnode_x);
 
-    cblas_daxpy(nelem_x + 1, b, x, 1, xsq, 1); //multiply x by b and add x^2 + a
-    //printArray(xsq,nelem_x + 1);
+    cblas_daxpy(nnode_x, b, x, 1, xsq, 1); //multiply x by b and add x^2 + a
+    //printArray(xsq,nnode_x);
 
-    cblas_daxpy(nelem_x + 1, 1, xsq, 1, h, 1);
-    //printArray(h, nelem_x + 1);
+    cblas_daxpy(nnode_x, 1, xsq, 1, h, 1);
+    //printArray(h, nnode_x);
 
     // OPTIMISE: If h is constant (i.e. a and b are zero), Y can be stored as y
     // Coordinate matrices X and Y are mapped in the same way as Node Topology Matrix
-    double X[(nelem_x + 1) * (nelem_y + 1)];     // Defining matrix X of X-coordinates for each node
-    double Y[(nelem_x + 1) * (nelem_y + 1)];     // Defining matrix Y of Y-coordinates for each node
-    int NodeTopo[(nelem_x + 1) * (nelem_y + 1)]; // Calculation of topology matrix NodeTopo
+    double X[nnode_x * nnode_y];     // Defining matrix X of X-coordinates for each node
+    double Y[nnode_x * nnode_y];     // Defining matrix Y of Y-coordinates for each node
+    int NodeTopo[nnode_x * nnode_y]; // Calculation of topology matrix NodeTopo
 
     // IMPROVE: Add function/class? that outputs [x,y] coordinates of a [nx,ny] node
     // Calculating the X, Y and NodeTopo
     for (int i = 0; i < nelem_y + 1; i++) {
-        for (int j = 0; j < nelem_x + 1; j++) {
-            X[(nelem_x + 1) * i + j] = x[j];
-            Y[(nelem_x + 1) * i + j] = h[j] / (nelem_y) * i - h[j] / 2;
-            NodeTopo[(nelem_x + 1) * i + j] = (nelem_y + 1) * j + i;
+        for (int j = 0; j < nnode_x; j++) {
+            X[nnode_x * i + j] = x[j];
+            Y[nnode_x * i + j] = h[j] / (nelem_y) * i - h[j] / 2;
+            NodeTopo[nnode_x * i + j] = nnode_y * j + i;
         }
     }
-    //printMatrix(NodeTopo,nelem_y + 1,nelem_x + 1);
-    //printMatrix(Y,nelem_y + 1,nelem_x + 1);
+    //printMatrix(NodeTopo,nnode_y,nnode_x);
+    //printMatrix(Y,nnode_y,nnode_x);
 
+    // Calculate list of node [x,y]-coordinates for .vtk-output
+    double Coord[nnode * 2];
+    for (int i = 0; i < nnode; i++){
+        Coord[2 * i + 0] = X[nnode_x * getInd_i(i,nnode_y) + getInd_j(i,nnode_y)];  // node x-coordinate
+        Coord[2 * i + 1] = Y[nnode_x * getInd_i(i,nnode_y) + getInd_j(i,nnode_y)];  // node y-coordinate
+    }
+    //printMatrix(Coord,nnode,2);
 
     //----- Calculation of topology matrix ElemNode -----------
-    int ElemNode[(nelem_x * nelem_y) * (nnode_elem + 1)];
+    int ElemNode[nelem * (nnode_elem + 1)];
     int elemnr = 0;
-    for (int i = 0; i < nelem_x + 1; i++) {
-        for (int j = 0; j < nelem_y + 1; j++) {
+    for (int i = 0; i < nnode_x; i++) {
+        for (int j = 0; j < nnode_y; j++) {
             if ((i < nelem_x) && (j < nelem_y)) {
                 ElemNode[5 * (nelem_y * i + j) + 0] = elemnr;    //Element number ID
-                ElemNode[5 * (nelem_y * i + j) + 1] = NodeTopo[((nelem_x + 1) * j + i)];            //Upper left node ID
-                ElemNode[5 * (nelem_y * i + j) + 2] = NodeTopo[((nelem_x + 1) * j + i + 1)];        //Upper right node ID
-                ElemNode[5 * (nelem_y * i + j) + 3] = NodeTopo[((nelem_x + 1) * (j + 1) + i + 1)];  //Lower right node ID
-                ElemNode[5 * (nelem_y * i + j) + 4] = NodeTopo[((nelem_x + 1) * (j + 1) + i)];      //Lower left node ID
+                ElemNode[5 * (nelem_y * i + j) + 1] = NodeTopo[(nnode_x * j + i)];            //Upper left node ID
+                ElemNode[5 * (nelem_y * i + j) + 2] = NodeTopo[(nnode_x * j + i + 1)];        //Upper right node ID
+                ElemNode[5 * (nelem_y * i + j) + 3] = NodeTopo[(nnode_x * (j + 1) + i + 1)];  //Lower right node ID
+                ElemNode[5 * (nelem_y * i + j) + 4] = NodeTopo[(nnode_x * (j + 1) + i)];      //Lower left node ID
                 elemnr += 1;
             }
         }
     }
 
     //printMatrix(ElemNode,nelem_x * nelem_y,nnode_elem + 1);
-    //printMatrix(NodeTopo,nelem_y + 1,nelem_x + 1);
+    //printMatrix(NodeTopo,nnode_y,nnode_x);
 
     // ----- Generate global dof numbers -----------------
     int eNodes[nnode_elem];         // Nodes associated with a given element
@@ -184,8 +189,8 @@ int main() {
     //printMatrix(globDof,nnode,2);
 
     // Counting the global dofs and inserting in globDof
-    int nDof = 0; // Number of dof for a given node
-    int eDof = 0; // Number of
+    int nDof = 0; // Number of global dofs active at a given node
+    int eDof = 0; // Number of dofs per node at a given node
     for (int i = 0; i < nnode; i++) {
         eDof = globDof[2 * i];
         for (int j = 0; j < eDof; j++) {
@@ -193,7 +198,7 @@ int main() {
             nDof += 1;
         }
     }
-    //printMatrix(globDof,nnode,2);
+    //printMatrix(eDof,nnode,2);
 
 
     // Assembly of global stiffness matrix K -------------
@@ -244,8 +249,8 @@ int main() {
 
             // eCoord is defined by obtaining the [i,j]-indices a node using getInd_i and getInd_j
             // These [i,j] indices are then used to extract the relevant element coordinates from X and Y
-            eCoord[2 * k + 0] = X[(nelem_x + 1) * getInd_i(eNodes[k],nnode_y) + getInd_j(eNodes[k],nnode_y)];  // node x-coordinates
-            eCoord[2 * k + 1] = Y[(nelem_x + 1) * getInd_i(eNodes[k],nnode_y) + getInd_j(eNodes[k],nnode_y)];  // node y-coordinates
+            eCoord[2 * k + 0] = X[nnode_x * getInd_i(eNodes[k],nnode_y) + getInd_j(eNodes[k],nnode_y)];  // node x-coordinates
+            eCoord[2 * k + 1] = Y[nnode_x * getInd_i(eNodes[k],nnode_y) + getInd_j(eNodes[k],nnode_y)];  // node y-coordinates
         }
         //printMatrix(eCoord,nnode_elem,2);
 
@@ -333,7 +338,7 @@ int main() {
     // Compute nodal boundary flux vector f --- natural B.C
     int q_edge; // Which edge the heat flux is applied to 0 = left, 1 = top, 2 = right, 3 = bottom
     int mult_i, mult_j; // Index multiplier defined by which edge is loaded, used to record edge nodes
-    int nFluxNodes = 0; // Number of nodes on the chosen edge of the plate
+    int nFluxNodes = 0; // Number of nodes on the chosen edge of the Plate
 
     // IMPROVE: Add command line input check and error message for default case
     // IMPROVE: Add case with no flux boundary?
@@ -342,25 +347,25 @@ int main() {
     q_edge = int(caseval[11]);
     switch (q_edge){
         // Left edge
-        case 0: nFluxNodes = nelem_y + 1;
-                mult_i = (nelem_x + 1);
+        case 0: nFluxNodes = nnode_y;
+                mult_i = nnode_x;
                 mult_j = 0;
                 break;
 
         // Top edge
-        case 1: nFluxNodes = nelem_x + 1;
+        case 1: nFluxNodes = nnode_x;
                 mult_i = 1;
-                mult_j = (nelem_x + 1) * nelem_y;
+                mult_j = nnode_x * nelem_y;
                 break;
 
         // Right edge
-        case 2: nFluxNodes = nelem_y + 1;
-                mult_i = (nelem_x + 1);
+        case 2: nFluxNodes = nnode_y;
+                mult_i = nnode_x;
                 mult_j = nelem_x;
                 break;
 
         // Bottom edge
-        case 3: nFluxNodes = nelem_x + 1;
+        case 3: nFluxNodes = nnode_x;
                 mult_i = 1;
                 mult_j = 0;
                 break;
@@ -380,7 +385,7 @@ int main() {
 
 
     // ----- Defining flux load -----------------------
-    double q_flux = caseval[13];  // Constant flux at right edge of the beam
+    double q_flux = caseval[13];  // Constant flux at right edge of the plate
     int nbe = nFluxNodes - 1;  // Number of elements with flux load
 
     // Element boundary condition
@@ -417,10 +422,10 @@ int main() {
         //cout << "node1 = " << node1 << ", node2 = " << node2 << endl;
 
         // Obtaining coordinates for the two nodes of the edge element using indices
-        x1 = X[(nelem_x + 1) * getInd_i(node1,nnode_y) + getInd_j(node1,nnode_y)];  // x coord of the first node
-        y1 = Y[(nelem_x + 1) * getInd_i(node1,nnode_y) + getInd_j(node1,nnode_y)];  // y coord of the first node
-        x2 = X[(nelem_x + 1) * getInd_i(node2,nnode_y) + getInd_j(node2,nnode_y)];  // x coord of the first node
-        y2 = Y[(nelem_x + 1) * getInd_i(node2,nnode_y) + getInd_j(node2,nnode_y)];  // y coord of the second node
+        x1 = X[nnode_x * getInd_i(node1,nnode_y) + getInd_j(node1,nnode_y)];  // x coord of the first node
+        y1 = Y[nnode_x * getInd_i(node1,nnode_y) + getInd_j(node1,nnode_y)];  // y coord of the first node
+        x2 = X[nnode_x * getInd_i(node2,nnode_y) + getInd_j(node2,nnode_y)];  // x coord of the first node
+        y2 = Y[nnode_x * getInd_i(node2,nnode_y) + getInd_j(node2,nnode_y)];  // y coord of the second node
 
         // Calculating length of element edge
         leng = sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));  // Element edge length
@@ -475,25 +480,25 @@ int main() {
     T_edge = int(caseval[10]);
     switch (T_edge){
         // Left edge
-        case 0: nTempNodes = nelem_y + 1;
-            mult_i = (nelem_x + 1);
+        case 0: nTempNodes = nnode_y;
+            mult_i = nnode_x;
             mult_j = 0;
             break;
 
             // Top edge
-        case 1: nTempNodes = nelem_x + 1;
+        case 1: nTempNodes = nnode_x;
             mult_i = 1;
-            mult_j = (nelem_x + 1) * nelem_y;
+            mult_j = nnode_x * nelem_y;
             break;
 
             // Right edge
-        case 2: nTempNodes = nelem_y + 1;
-            mult_i = (nelem_x + 1);
+        case 2: nTempNodes = nnode_y;
+            mult_i = nnode_x;
             mult_j = nelem_x;
             break;
 
             // Bottom edge
-        case 3: nTempNodes = nelem_x + 1;
+        case 3: nTempNodes = nnode_x;
             mult_i = 1;
             mult_j = 0;
             break;
@@ -655,8 +660,14 @@ int main() {
             counter2++;
         }
     }
-    printMatrix(T,nelem_x + 1, nelem_y + 1);
-    //printMatrix(f,nelem_x + 1, nelem_y + 1);
+    printMatrix(T,nnode_x, nnode_y);
+    //printMatrix(f,nnode_x, nnode_y);
+
+
+    // Output result to .vtk-file to plot using ParaView
+    WriteVtkFile(nnode_elem, nnode, nelem, Coord, ElemNode, T);
+
+
 
     // Cleaning remaining dynamic arrays from heap
     delete[] tempNodes;
@@ -726,4 +737,54 @@ void printMatrix(int* a, int M, int N){
 
     }
     cout << "]" << endl;
+}
+
+// Creates a VTK file of the solutions
+void WriteVtkFile(int nnode_elem, int nnode, int nelem, double* Coord, int* ElemNode, double* T) {
+
+    ofstream vOut("Output.vtk", ios::out | ios::trunc); // Output file initialisation
+
+    vOut.precision(10);
+
+    // Title and info
+    vOut << "# vtk DataFile Version 4.0" << endl; // VTK Version
+    vOut << "vtk output" << endl;   // Stating output
+    vOut << "ASCII" << endl;    // Format
+    vOut << "DATASET UNSTRUCTURED_GRID" << endl;    // Dataset
+    vOut << "POINTS " << nnode << " double" << endl; // Data type
+
+    // Print nodal coordinates
+    for (int i = 0; i < nnode ; i++) {
+        // [x,y,z] (=0), separated by spaces
+        vOut << Coord[2 * i] << " " << Coord[2 * i + 1] << " " << "0 ";
+    }
+    vOut << endl;
+
+    vOut << "Cells " << nelem << " " << (nnode_elem + 1) * nelem << endl;
+
+    // Print nodes of each element
+    for (int i = 0; i < nelem; i++) {
+        vOut << nnode_elem << " ";
+        for (int j = 1; j < nnode_elem + 1; j++) {
+            vOut << ElemNode[(nnode_elem + 1) * i + j] << " ";
+        }
+        vOut << endl;
+    }
+
+    // Print cell types as quadrilateral elements
+    vOut << "CELL_TYPES " << nelem << endl;
+    for (int i = 0; i < nelem; i++) {
+        vOut << "9 " << endl;
+    }
+    // Adding metadata
+    vOut << "POINT_DATA " << nnode << endl;
+    vOut << "FIELD FieldData 1" << endl;
+    vOut << "disp 1 " << nnode << " double" << endl;
+
+    // Outputting temperature vector T
+    for (int i = 0; i < nnode; i++) {
+        vOut << T[i] << " ";
+    }
+    vOut.close();
+
 }
