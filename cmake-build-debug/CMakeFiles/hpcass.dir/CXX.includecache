@@ -25,7 +25,13 @@ fstream
 -
 cblas.h
 /Users/birkulstad/hpc-exercises/hpcass/cblas.h
+limits
+-
+cstring
+-
 cstdlib
+-
+cstdio
 -
 vector
 -

@@ -4,8 +4,11 @@
 #include <valarray>
 #include <fstream>
 #include "cblas.h"
+#include <limits>
+#include <cstring> // Need this for memset on Linux Remote FIX
 
 #include <cstdlib>
+#include <cstdio>
 #include <vector>
 #include <numeric>
 #include <functional>
@@ -134,7 +137,6 @@ int main() {
     double Y[nnode_x * nnode_y];     // Defining matrix Y of Y-coordinates for each node
     int NodeTopo[nnode_x * nnode_y]; // Calculation of topology matrix NodeTopo
 
-    // IMPROVE: Add function/class? that outputs [x,y] coordinates of a [nx,ny] node
     // Calculating the X, Y and NodeTopo
     for (int i = 0; i < nelem_y + 1; i++) {
         for (int j = 0; j < nnode_x; j++) {
@@ -221,8 +223,8 @@ int main() {
     auto* Ke = new double[nnode_elem * nnode_elem];   // Initialising element stiffness matrix Ke on heap to allow
                                                         // memset for every new element
     double K[nnode * nnode]={0};  // Initiation of global stiffness matrix K
-    double B[2 * nnode_elem]; // Some dot product IMPROVE
-    double C[nnode_elem * 2]; // Some dot product IMPROVE
+    double B[2 * nnode_elem]; // Temporary matrix for cblas operations
+    double C[nnode_elem * 2]; // Temporary matrix for cblas operations
     double Ke_a;    // alpha-multiplier for cblas calculation of Ke
 
     // Variables associated with the the natural coordinate system and the Jacobian
@@ -287,12 +289,10 @@ int main() {
                 cblas_dgemm(CblasRowMajor,CblasNoTrans,CblasNoTrans, 2, 2, 4, 1, GN, 4, eCoord, 2, 0, J, 2);
                 //printMatrix(J, gaussorder, gaussorder);
 
-                // Jacobian determinant
-                // TODO: IMPROVE BY IMPLEMENTING LAPACK DETERMINANT?
+                // Jacobian determinant (2x2 determinant not worth doing using LAPACK P-L-U)
                 detJ = detMatrix2(J);
 
-                // TODO: IMPROVE BY IMPLEMENTING LAPACK INVERSE?
-                // Inverse Jacobian matrix
+                // Inverse Jacobian matrix (2x2 inverse not worth doing using LAPACK P-L-U)
                 invMatrix2(J, invJ);
                 //printMatrix(invJ,2,2);
 
@@ -400,7 +400,6 @@ int main() {
 
 
     // --------------- Calculate Nodal Flux Vector f -------------------
-    // FIX: Python wants f to be initialised as nDof, but apparently nDof changes?
     double f[nnode] = {0};  // initialize nodal flux vector
     int node1; // first node along an element edge
     int node2; // second node along an element edge
