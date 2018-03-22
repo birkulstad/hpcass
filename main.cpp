@@ -1,4 +1,6 @@
 #include <iostream>
+#include <stdio.h>
+#include <string.h>
 #include <cstdlib>
 #include <cmath>
 #include <ctime>
@@ -8,8 +10,15 @@
 #include <functional>
 #include <algorithm>
 #include <valarray>
-
 #include "cblas.h"
+
+#define F77NAME(x) x##_
+extern "C" {
+    // LAPACK routine for solving systems of linear equations
+    void F77NAME(dgesv)(const int& n, const int& nrhs, const double * A,
+                        const int& lda, int * ipiv, double * B,
+                        const int& ldb, int& info);
+}
 
 using namespace std;
 
@@ -70,6 +79,8 @@ int main() {
     const int nelem_x = 10;  // Number of elements in the x-direction
 
     const int nnode_elem = 4;  // number of nodes in each element
+
+    // IMPROVE: Replace nelem_y + 1 with nnodey and same with nelem_x
 
     //OPTIMISE:
     // nNodeDof[nnode_elem] = {1, 1, 1, 1};
@@ -414,7 +425,7 @@ int main() {
     // Initialise fluxNodes with size appropriate to the edge selected
     int* fluxNodes = new int[nFluxNodes];
 
-    printMatrix(NodeTopo,6,11);
+    //printMatrix(NodeTopo,nelem_y + 1,nelem_x + 1);
     //cout << nFluxNodes << endl;
 
     for (int i = 0; i < nFluxNodes; i++){
@@ -440,8 +451,8 @@ int main() {
     //printMatrix(n_bc, 4, 5);
 
     //printArray(x,nelem_x+1);
-    printMatrix(X,nelem_y+1,nelem_x+1);
-    printMatrix(Y,nelem_y+1,nelem_x+1);
+    //printMatrix(X,nelem_y+1,nelem_x+1);
+    //printMatrix(Y,nelem_y+1,nelem_x+1);
 
     // --------------- Calculate Nodal Flux Vector f -------------------
     // FIX: Python wants f to be initialised as nDof, but apparently nDof changes?
@@ -555,7 +566,7 @@ int main() {
     int* tempNodes = new int[nTempNodes];
 
 
-    printMatrix(NodeTopo,6,11);
+    //printMatrix(NodeTopo,nelem_y + 1,nelem_x + 1);
     //cout << nFluxNodes << endl;
 
     for (int i = 0; i < nTempNodes; i++){
@@ -626,12 +637,14 @@ int main() {
     // --------------------- Partition matrices ----------------------------
 
     //mask_E = np.array([(i in TempNodes) for i in range(len(T))])  // known temperature Dof
+    // IMPROVE: Replace all nnode - nTempNodes with a single variable
 
     int mask_E[nnode] = {0}; // known temperature Dof
     double T_E[nTempNodes]; // known values of T
     double T_F[nnode-nTempNodes]; // unknown values of T
     double f_E[nTempNodes]; // unknown values of f
     double f_F[nnode - nTempNodes]; // known f-values
+    double rhs[nnode - nTempNodes]; // RHS of linear solver
 
 
     // Creating mask array for known values. Known -> entry = 1
@@ -650,8 +663,13 @@ int main() {
             T_E[counter1] = T[i];
             counter1++;
         }
-        else {f_F[counter2] = f[i]; counter2++;}
+        else {
+            f_F[counter2] = f[i];
+            rhs[counter2] = f[i]; // Pre-setting rhs to f_F, because rhs = f_F + ...cblas routine
+            counter2++;
+        }
     }
+    //printMatrix(rhs, 1, nnode - nTempNodes);
     //printMatrix(T_E,1,nTempNodes);
     //printMatrix(f_F,1,nnode-nTempNodes);
 
@@ -686,12 +704,21 @@ int main() {
     //printMatrix(K_FF,(nnode - nTempNodes),(nnode - nTempNodes));
 
     // TODO: Implement LAPACK solver for this block
-    /*
-    // solve for d_F
-    rhs = f_F - np.dot(K_EF.T, T_E)
-    T_F = np.linalg.solve(K_FF, rhs)
-    T_F;
-    */
+
+    // -------------------- Solve for T_F -------------------------
+    // Calculate RHS
+    //rhs = f_F - np.dot(K_EF.T, T_E)
+    //printMatrix(rhs, 1, nnode - nTempNodes);
+    cblas_dgemv(CblasRowMajor, CblasTrans, nTempNodes, nnode - nTempNodes, -1, K_EF, nnode - nTempNodes, T_E, 1, 1, rhs, 1);
+    //printMatrix(rhs, 1, nnode - nTempNodes);
+
+    //T_F = np.linalg.solve(K_FF, rhs)
+    int ipiv[nnode - nTempNodes];
+    int info;
+    F77NAME(dgesv)(nnode - nTempNodes, 1, K_FF, nnode - nTempNodes, ipiv, rhs, nnode - nTempNodes, info);
+
+    cblas_dcopy(nnode - nTempNodes, rhs, 1, T_F, 1);
+    //printMatrix(T_F, 1, nnode - nTempNodes);
 
     // compute the reaction f_E
     double f_E1[nTempNodes];
@@ -701,12 +728,15 @@ int main() {
 
     // Calculating f_E = K_EE * T_E
     cblas_dgemv(CblasRowMajor, CblasNoTrans, nTempNodes, nTempNodes, 1, K_EE, nTempNodes, T_E, 1, 0, f_E, 1);
-    printMatrix(f_E,1,nTempNodes);
+    //printMatrix(f_E,1,nTempNodes);
+
     // Calculating f_E1 = K_EF * T_F
-    cblas_dgemv(CblasRowMajor, CblasNoTrans, nTempNodes, nnode - nTempNodes, 1, K_EF, nTempNodes, T_F, 1, 0, f_E1, 1);
+    cblas_dgemv(CblasRowMajor, CblasNoTrans, nTempNodes, nnode - nTempNodes, 1, K_EF, nnode - nTempNodes, T_F, 1, 0, f_E1, 1);
+    //printMatrix(T_F, 1, nnode - nTempNodes);
 
     // Calculating f_E = f_E + f_E1
     cblas_daxpy(nTempNodes,1,f_E1,1,f_E,1);
+    //printMatrix(f_E, 1, nTempNodes);
 
     counter1 = 0;
     counter2 = 0;
@@ -719,10 +749,11 @@ int main() {
         else {
             T[i] = T_F[counter2];
             f[i] = f_F[counter2];
+            counter2++;
         }
     }
     //printMatrix(T,1,nnode);
-    //printMatrix(f,1,nnode);
+    printMatrix(f,1,nnode);
 
     return 0;
 }
