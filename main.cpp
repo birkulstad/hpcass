@@ -75,8 +75,8 @@ int main() {
     const double b = -a * L + (h2 - h1) / L;
 
 // ----- Meshing Geometry -----------------
-    const int nelem_y = 5;  // Number of elements in y-direction
     const int nelem_x = 10;  // Number of elements in the x-direction
+    const int nelem_y = 5;  // Number of elements in y-direction
 
     const int nnode_elem = 4;  // number of nodes in each element
 
@@ -119,7 +119,7 @@ int main() {
     //double xsq[nelem_x];
     //creating x^2 array
     double xsq[nelem_x + 1];
-    for (int i = 0; i < nelem_x; i++) {
+    for (int i = 0; i < nelem_x + 1; i++) {
         *(xsq + i) = x[i] * x[i];
     }
 
@@ -129,11 +129,11 @@ int main() {
     for (double &i : h) {
         i = h1;
     }
-    //printArray(*h,nelem_x);
+    //printArray(h,nelem_x + 1);
     cblas_dscal(nelem_x + 1, a, xsq, 1);    //multiply x^2 by a -> x2
-    //printArray(*xsq,nelem_x);
+    //printArray(xsq,nelem_x + 1);
     cblas_daxpy(nelem_x + 1, b, x, 1, xsq, 1); //multiply x by b and add x^2 + a
-    //printArray(*xsq,nelem_x);
+    //printArray(xsq,nelem_x + 1);
     cblas_daxpy(nelem_x + 1, 1, xsq, 1, h, 1);
     //printArray(h, nelem_x + 1);
 
@@ -141,13 +141,6 @@ int main() {
     //double h = a * xsq + b * x + h1
 
     //OPTIMISE: If h is constant (i.e. a and b are zero), Y can be stored as y
-    double y[nelem_y + 1];
-    //Distribute length of h(x) over number of nodes in y (linspace)
-    for (int j = 0; j < nelem_y + 1; j++) {
-        y[j] = h[j] * j / (nelem_y) - h[j] / 2;
-    }
-    //printArray(y, nelem_y + 1);
-
 
     //Defining matrix Y of Y-coordinates for each node
     //Defining matrix Coord of [x,y] pairs for each node
@@ -161,16 +154,18 @@ int main() {
     for (int i = 0; i < nelem_y + 1; i++) {
         for (int j = 0; j < nelem_x + 1; j++) {
             X[(nelem_x + 1) * i + j] = x[j];
-            Y[(nelem_x + 1) * i + j] = y[i] * h[j];
+            Y[(nelem_x + 1) * i + j] = h[j] / (nelem_y) * i - h[j] / 2;
             NodeTopo[(nelem_x + 1) * i + j] = (nelem_y + 1) * j + i;
             //cout << "i,j = " << i << "," << j << "y,h=" << y[i] << "," << h[j] << "Y=" << Y[nelem_y * i + j] << endl;
             Coord[2 * ((nelem_x + 1) * i + j) + 0] = x[j];
-            Coord[2 * ((nelem_x + 1) * i + j) + 1] = y[i] * h[j];
+            Coord[2 * ((nelem_x + 1) * i + j) + 1] = h[j] / (nelem_y) * i - h[j] / 2;
             //cout << "i,j = " << i << "," << j << "    x,y = " << Coord[2 * (nelem_y * i + j) + 0] << "," << Coord[2 * (nelem_y * i + j) + 1] << "    Y = " << Y[nelem_y * i + j] << endl;
             //cout << (nelem_y + 1) * j + i << endl;
         }
     }
-    //printMatrix(X,6,11);
+    //printMatrix(Coord,(nelem_x + 1) * (nelem_y + 1) , 2);
+    //printMatrix(NodeTopo,nelem_y + 1,nelem_x + 1);
+    //printMatrix(Y,nelem_y + 1,nelem_x + 1);
 
 
     //----- Calculation of topology matrix ElemNode -----------
@@ -189,9 +184,8 @@ int main() {
         }
     }
 
-    //printMatrix(ElemNode,50,5);
-    //printMatrix(NodeTopo,6,11);
-    //printArray(NodeTopo, 6*11);
+    //printMatrix(ElemNode,nelem_x * nelem_y,nnode_elem + 1);
+    //printMatrix(NodeTopo,nelem_y + 1,nelem_x + 1);
 
     double ElemX[(nelem_x * nelem_y) * (nnode_elem)]; // Element nodal x-coordinates
     double ElemY[(nelem_x * nelem_y) * (nnode_elem)]; // Element nodal y-coordinates
@@ -208,15 +202,18 @@ int main() {
             // Calculating indices (i,j)=(p,q) to obtain (x,y)-coordinates from X and Y
             // Note that p and q are calculated bearing in mind NodeTopo numbering of nodes
             // TODO: Replace p and q with getInd_i and getInd_j
+            // ElemX and ElemY are incorrect for case 3, but turn out to not be used elsewhere in the script...
+            /*
             p = eNodes[k] % (nelem_y + 1);  // Row number
             q = (eNodes[k] - (eNodes[k] % (nelem_y + 1))) / (nelem_y + 1); // Column number
             //cout << "p,q = " << p << "," << q << "    np+q = " << (nelem_x + 1) * p + q << "    X[] = " << X[(nelem_x + 1) * p + q] << endl;
             ElemX[(nnode_elem) * i + k] = X[(nelem_x + 1) * p + q];
             ElemY[(nnode_elem) * i + k] = Y[(nelem_x + 1) * p + q];
+            */
         }
         //printArray(eNodes,4);
     }
-    //printMatrix(ElemX,50,4);
+    //printMatrix(ElemY,(nelem_x * nelem_y) , (nnode_elem));
 
     // ----- Generate global dof numbers -----------------
 
@@ -234,7 +231,7 @@ int main() {
             }
         }
     }
-    //printMatrix(globDof,50,2);
+    //printMatrix(globDof,nnode,2);
     //printArray(nNodeDof,nnode_elem);
 
     // counting the global dofs and inserting in globDof
@@ -247,6 +244,7 @@ int main() {
             nDof += 1;
         }
     }
+    //printMatrix(globDof,nnode,2);
     //printMatrix(globDof,nnode,2);
 
     // Assembly of global stiffness matrix K -------------
@@ -307,6 +305,7 @@ int main() {
             eX[j] = eCoord[j + 0]; // Node x-coordinates
             eY[j] = eCoord[j + 1]; // Node y-coordinates
         }
+        //printMatrix(gDof, 1, nnode_elem);
 
         memset(Ke, 0.0, sizeof(Ke) * nnode_elem * nnode_elem); // Reset Ke to 0 for each new member
         // ----- Element stiffness matrix, Ke, found by Gauss integration -----------
@@ -392,7 +391,7 @@ int main() {
 
     //IMPROVE: Add command line input check and error message for default case
 
-    q_edge = 2;
+    q_edge = 1;
     switch (q_edge){
         // Left edge
         case 0: nFluxNodes = nelem_y + 1;
@@ -403,7 +402,7 @@ int main() {
         // Top edge
         case 1: nFluxNodes = nelem_x + 1;
                 mult_i = 1;
-                mult_j = 0;
+                mult_j = (nelem_x + 1) * nelem_y;
                 break;
 
         // Right edge
@@ -415,7 +414,7 @@ int main() {
         // Bottom edge
         case 3: nFluxNodes = nelem_x + 1;
                 mult_i = 1;
-                mult_j = (nelem_x + 1) * nelem_y;
+                mult_j = 0;
                 break;
 
         default: cout << "Error! Choose a value between 0 and 3 corresponding to the edge with heat flux!" << endl;
@@ -432,7 +431,7 @@ int main() {
         fluxNodes[i] = NodeTopo[mult_i * i + mult_j];
     }
 
-    //printMatrix(fluxNodes,1,nFluxNodes);
+    printMatrix(fluxNodes,1,nFluxNodes);
 
 
 
@@ -520,6 +519,7 @@ int main() {
     // Release memory from the heap
     delete[] fluxNodes;
     delete[] n_bc;
+    delete[] fq;
 
     //printMatrix(f, 1, nnode);
 
@@ -532,7 +532,7 @@ int main() {
 
     //IMPROVE: Add check to ensure user input does not select same edge for q and T
 
-    T_edge = 0;
+    T_edge = 3;
     switch (T_edge){
         // Left edge
         case 0: nTempNodes = nelem_y + 1;
@@ -543,7 +543,7 @@ int main() {
             // Top edge
         case 1: nTempNodes = nelem_x + 1;
             mult_i = 1;
-            mult_j = 0;
+            mult_j = (nelem_x + 1) * nelem_y;
             break;
 
             // Right edge
@@ -555,7 +555,7 @@ int main() {
             // Bottom edge
         case 3: nTempNodes = nelem_x + 1;
             mult_i = 1;
-            mult_j = (nelem_x + 1) * nelem_y;
+            mult_j = 0;
             break;
 
         default: cout << "Error! Choose a value between 0 and 3 corresponding to the edge with heat flux!" << endl;
@@ -752,8 +752,13 @@ int main() {
             counter2++;
         }
     }
-    //printMatrix(T,1,nnode);
-    printMatrix(f,1,nnode);
+    printMatrix(T,nelem_x + 1, nelem_y + 1);
+    //printMatrix(f,nelem_x + 1, nelem_y + 1);
+
+    // Cleaning remaining dynamic arrays from heap
+
+    delete[] tempNodes;
+    delete[] BC;
 
     return 0;
 }
