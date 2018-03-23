@@ -1,75 +1,62 @@
+#include <cstring> // Needed for memset to work in Linux environment
 #include <iostream>
 #include <cmath>
-#include <iomanip>
 #include <valarray>
-#include <fstream>
-#include "cblas.h"
-#include <limits>
-#include <cstring> // Need this for memset on Linux Remote FIX
-#include "colormod.h" // namespace Color
-#include "io.h"
 #include <mpi.h>
+
+#include "cblas.h"
+#include "io.h"
+#include "init.h"
+#include "oper.h"
+
+
+/*
+#include <iomanip>
 #include <cstdlib>
 #include <cstdio>
-
-#include <vector>
 #include <numeric>
 #include <functional>
 #include <algorithm>
 #include <ctime>
-
-#define F77NAME(x) x##_
-extern "C" {
-    // LAPACK routine for solving systems of linear equations
-    void F77NAME(dgesv)(const int& n, const int& nrhs, const double * A,
-                        const int& lda, int * ipiv, double * B,
-                        const int& ldb, int& info);
-}
+ */
 
 using namespace std;
+
+// Written by Birk Andreas Ulstad, Imperial College London, Department of Aeronautics March 2018
+// NOTE: All arrays are stored in RowMajor format, dynamic arrays are used sparsely and quickly delete from the heap.
 
 /*
  * OPTIMISE: stuff that could be optimised
  * IMPROVE: stuff that could be implemented in a more elegant/clear way
- * FIX: temporary bugs/problems that need fixing to progress
  */
 
-//Declaring function prototypes
-
-
-double detMatrix2(double*);
-void invMatrix2(double*, double*);
-
-int getInd_i(int, int);
-int getInd_j(int, int);
-
-void zeros(double*, int);
-void zeros(int*, int);
+//FIX: Remove before submission
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCDFAInspection"
 
 int main(int argc, char* argv[]) {
+
     // Initialising MPI-variables
-    /*
     int rank, size, retval_rank, retval_size;
-
     MPI_Init(&argc, &argv);
-
     retval_rank = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     retval_size = MPI_Comm_size(MPI_COMM_WORLD, &size);
+
     if (retval_rank == MPI_ERR_COMM || retval_size == MPI_ERR_COMM){
-        cout << red << "Invalid Communicator!" << def << endl;
+        cout << "Invalid Communicator!" << endl;
     }
     cout << "I am process " << rank + 1 << " of " << size << endl;
-    */
 
-    //  ##########################################################################################################################
+
+    //  ###################################################################################################
     /*
     // --------------- Case Constants -----------------
     // Remove this block once the command line input is enabled
-    //const double caseval[] = {a, h1, h2, L, tp, nelem_x, nelem_y,kx, ky, kxy, T_edge, q_edge, T0, q0};
-    const double caseval[] = {0, 1, 1, 2, 0.2, 10, 5, 250, 250, 0, 0, 2, 10, 2500}; //case1
-    //const double caseval[] = {0, 1, 1, 2, 0.2, 10, 5, 250, 250, 0, 3, 1, 10, 2500}; //case2
-    //const double caseval[] = {0.25, 1, 1.3, 3, 0.2, 15, 8, 250, 250, 0, 0, 3, -20, -5000}; //case3
-    //const double caseval[] = {0, -1, 1, 2, 0.2, 10, 5, 250, 250, 0, 0, 2, 10, 2500}; //case4
+    //const double caseval[] = {a, h1, h2, L, tp, nelem_x, nelem_y,kx, ky, kxy, T_edge, q_edge, T0, q0, case};
+    const double caseval[] = {0, 1, 1, 2, 0.2, 10, 5, 250, 250, 0, 0, 2, 10, 2500, 1}; //case1
+    //const double caseval[] = {0, 1, 1, 2, 0.2, 10, 5, 250, 250, 0, 3, 1, 10, 2500, 2}; //case2
+    //const double caseval[] = {0.25, 1, 1.3, 3, 0.2, 15, 8, 250, 250, 0, 0, 3, -20, -5000, 4}; //case3
+    //const double caseval[] = {0.25, 1, 2, 3, 0.2, 5, 25, 250, 250, 0, 0, 2, 10, 2500, 4}; //case4
 
     // ----- Integration scheme -----------------
     const int gaussorder = 2;
@@ -99,6 +86,8 @@ int main(int argc, char* argv[]) {
     // ----- Boundary Conditions Parameters -----------------
     double T0 = caseval[12];  // Constant temperature at the chosen edge of the plate
     double q0 = caseval[13];  // Constant flux at the chosen edge of the plate
+
+    const auto casenum = int(caseval[14]); // Case number for determining .vtk filename
     */
     // ##########################################################################################################################
 
@@ -123,22 +112,25 @@ int main(int argc, char* argv[]) {
     const double ky = atof(argv[9]);   // Thermal conductivity [W/mK]
     const double kxy = atof(argv[10]);  // Thermal conductivity [W/mK]
 
+    // ----- Defining BC Edges -------------------
     const int T_edge = atoi(argv[11]); // Which edge the constant Temp is applied to 0 = left, 1 = top, 2 = right, 3 = bottom
     const int q_edge = atoi(argv[12]); // Which edge the heat flux is applied to 0 = left, 1 = top, 2 = right, 3 = bottom
 
+    // ----- Defining BC Parameters -------------------
     double T0 = atof(argv[13]);  // Constant temperature at edge
     double q0 = atof(argv[14]);  // Constant flux at right edge of the plate
 
+    int casenum = atoi(argv[15]); // Case number for determining .vtk filename
 
 
-    // {a, h1, h2, L, tp, nelem_x, nelem_y,kx, ky, kxy, T_edge, q_edge, T0, q0};
+
     // ----------------------- Checking inputs, throw errorMessage if invalid ---------------------
     if (h1 <= 0 || h2 <= 0 || L <= 0 || th <= 0){errorMessage(1); return -1;}
     if (nelem_x <= 1 || nelem_y <= 1){errorMessage(2); return -1;}
     if (kx * ky <= 0){errorMessage(3); return -1;}
     if ((T_edge < 0 || T_edge > 3) || (q_edge < 0 || q_edge > 3)){errorMessage(4); return -1;}
     if (T_edge == q_edge){errorMessage(5); return -1;}
-    if (a > 2 * (h1 + h2)/(L * (2 - L))){errorMessage(6); return -1;}
+    // if (a > 2 * (h1 + h2)/(L * (2 - L))){errorMessage(6); return -1;} // Non-continuous surface condition?
 
     // Calculate b constant in the polynomial describing the plate height
     const double b = -a * L + (h2 - h1) / L;
@@ -153,16 +145,13 @@ int main(int argc, char* argv[]) {
     const int nelem = nelem_x * nelem_y;  // Total number of elements
     const int nnode = nnode_x * nnode_y;  // Total number of nodes
 
+    // Discretising x
+    double x[nnode_x];
+    // Distribute length of L over number of nodes
+    linspace(0, L, nnode_x, x);
+
     // ----- Calculation of plate height h(x) ---------
     // h = a * x^2 + b * x + h1
-    // OPTIMISE: Create linspace-function and implement where needed
-    double x[nnode_x];
-
-    // Distribute length of L over number of nodes (linspace)
-    for (int i = 0; i < nnode_x; i++) {
-        x[i] = (L - 0) / (nelem_x) * i;
-    }
-    //printArray(x, nnode_x);
 
     // Creating x^2 array
     double xsq[nnode_x];
@@ -174,22 +163,16 @@ int main(int argc, char* argv[]) {
     double h[nnode_x];
 
     // Adding h1 to all entries before blas operations
-    for (double &i : h) {
-        i = h1;
+    for (int i = 0; i < nnode_x; i++) {
+        h[i] = h1;
     }
-    //printArray(h,nnode_x);
 
-    cblas_dscal(nnode_x, a, xsq, 1);    //multiply x^2 by a -> x2
-    //printArray(xsq,nnode_x);
+    // Performing calculations of h using CBLAS Level 1
+    cblas_dscal(nnode_x, a, xsq, 1);        // multiply x^2 by a -> x^22
+    cblas_daxpy(nnode_x, b, x, 1, xsq, 1);  // multiply x by b and add x^2 + a
+    cblas_daxpy(nnode_x, 1, xsq, 1, h, 1);  // add ax^2 + bx to h1 in h
 
-    cblas_daxpy(nnode_x, b, x, 1, xsq, 1); //multiply x by b and add x^2 + a
-    //printArray(xsq,nnode_x);
-
-    cblas_daxpy(nnode_x, 1, xsq, 1, h, 1);
-    //printArray(h, nnode_x);
-
-    // OPTIMISE: If h is constant (i.e. a and b are zero), Y can be stored as y
-    // Coordinate matrices X and Y are mapped in the same way as Node Topology Matrix
+    // Coordinate matrices X and Y are mapped in the same way as Node Topology Matrix (NodeTopo)
     double X[nnode_x * nnode_y];     // Defining matrix X of X-coordinates for each node
     double Y[nnode_x * nnode_y];     // Defining matrix Y of Y-coordinates for each node
     int NodeTopo[nnode_x * nnode_y]; // Calculation of topology matrix NodeTopo
@@ -202,16 +185,13 @@ int main(int argc, char* argv[]) {
             NodeTopo[nnode_x * i + j] = nnode_y * j + i;
         }
     }
-    //printMatrix(NodeTopo,nnode_y,nnode_x);
-    //printMatrix(Y,nnode_y,nnode_x);
 
     // Calculate list of node [x,y]-coordinates for .vtk-output
     double Coord[nnode * 2];
     for (int i = 0; i < nnode; i++){
-        Coord[2 * i + 0] = X[nnode_x * getInd_i(i,nnode_y) + getInd_j(i,nnode_y)];  // node x-coordinate
-        Coord[2 * i + 1] = Y[nnode_x * getInd_i(i,nnode_y) + getInd_j(i,nnode_y)];  // node y-coordinate
+        Coord[2 * i + 0] = getCoord(i, X, nnode_x, nnode_y);  // node x-coordinate
+        Coord[2 * i + 1] = getCoord(i, Y, nnode_x, nnode_y);  // node y-coordinate
     }
-    //printMatrix(Coord,nnode,2);
 
     //----- Calculation of topology matrix ElemNode -----------
     int ElemNode[nelem * (nnode_elem + 1)];
@@ -229,13 +209,10 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    //printMatrix(ElemNode,nelem_x * nelem_y,nnode_elem + 1);
-    //printMatrix(NodeTopo,nnode_y,nnode_x);
-
     // ----- Generate global dof numbers -----------------
     int eNodes[nnode_elem];         // Nodes associated with a given element
-    int globDof[nnode * 2];     // List of [number of Dof for node, global Dof]
-    zeros(globDof, nnode * 2);
+    int globDof[nnode * 2];         // List of [number of Dof for node, global Dof]
+    populate(globDof, nnode * 2, 0);
 
     for (int i = 0; i < nelem; i++){
         for (int k = 0; k < nnode_elem; k++) {
@@ -244,9 +221,7 @@ int main(int argc, char* argv[]) {
                 globDof[2 * eNodes[k]] = nNodeDof[k];
             }
         }
-        //printArray(eNodes,4);
     }
-    //printMatrix(globDof,nnode,2);
 
     // Counting the global dofs and inserting in globDof
     int nDof = 0; // Number of global dofs active at a given node
@@ -258,31 +233,24 @@ int main(int argc, char* argv[]) {
             nDof += 1;
         }
     }
-    //printMatrix(eDof,nnode,2);
 
-
-    // Assembly of global stiffness matrix K -------------
+    // --------------------------------- Assembly of global stiffness matrix K ----------------------------------
     // ----- Gauss-points and weights ----------------------------
-
-    // Gaussian Points
-    const double GP[gaussorder] = {-1 / sqrt(3), 1 / sqrt(3)};
-
-    // Gaussian Weights
-    const double W[gaussorder] = {1, 1};
+    const double GP[gaussorder] = {-1 / sqrt(3), 1 / sqrt(3)};      // Gaussian Points
+    const double W[gaussorder] = {1, 1};                            // Gaussian Weights
 
     // Conductivity matrix D
     const double D[2 * 2] = {kx, kxy, kxy, ky};
 
-    // ------ Defining variables used in K-assembly --------------
+    // ----------- Defining variables used in K-assembly --------------
 
     // Variables used for storing matrices/related to matrix operations
-    auto* Ke = new double[nnode_elem * nnode_elem];   // Initialising element stiffness matrix Ke on heap to allow
-                                                        // memset for every new element
+    auto* Ke = new double[nnode_elem * nnode_elem];
     double K[nnode * nnode];  // Initiation of global stiffness matrix K
     double B[2 * nnode_elem]; // Temporary matrix for cblas operations
     double C[nnode_elem * 2]; // Temporary matrix for cblas operations
     double Ke_a;    // alpha-multiplier for cblas calculation of Ke
-    zeros(K, nnode * nnode);
+    populate(K, nnode * nnode, 0);
 
     // Variables associated with the the natural coordinate system and the Jacobian
     double eta, xi; // Natural coordinates
@@ -293,7 +261,6 @@ int main(int argc, char* argv[]) {
     double detJ; //Determinant of J
 
     // Coordinates of nodes associated with the element
-    int gDof[nnode_elem] = {0}; // Used to construct scatter matrix
     double eCoord[nnode_elem * 2]; // For storing the node coordinates of an element
 
 
@@ -305,139 +272,66 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < nelem; i++) {
         for (int k = 0; k < nnode_elem; k++){
             eNodes[k] = ElemNode[(nnode_elem + 1) * i + k + 1]; // Associated element nodes
-
-            // eCoord is defined by obtaining the [i,j]-indices a node using getInd_i and getInd_j
-            // These [i,j] indices are then used to extract the relevant element coordinates from X and Y
-            eCoord[2 * k + 0] = X[nnode_x * getInd_i(eNodes[k],nnode_y) + getInd_j(eNodes[k],nnode_y)];  // node x-coordinates
-            eCoord[2 * k + 1] = Y[nnode_x * getInd_i(eNodes[k],nnode_y) + getInd_j(eNodes[k],nnode_y)];  // node y-coordinates
+            eCoord[2 * k + 0] = getCoord(eNodes[k], X, nnode_x, nnode_y);  // x-coordinate of associated element nodes
+            eCoord[2 * k + 1] = getCoord(eNodes[k], Y, nnode_x, nnode_y);  // y-coordinate of associated element nodes
         }
-        //printMatrix(eCoord,nnode_elem,2);
 
-        for (int j = 0; j < nnode_elem; j++) {
-            // global dof for node j gathered in element gDof OPTIMISE: gDof == eNodes
-            // potential simplification as per above, could have unknown effects in different cases
-            gDof[j] = globDof[2 * eNodes[j] + 1];
-        }
-        //printMatrix(gDof, 1, nnode_elem);
-
-        memset(Ke, 0.0, sizeof(Ke) * nnode_elem * nnode_elem); // Reset Ke to 0 for each new member
+        memset(Ke, 0, sizeof(Ke) * nnode_elem * nnode_elem); // Reset Ke to 0 for each new member
         // ----- Element stiffness matrix, Ke, found by Gauss integration -----------
 
         for (int j = 0; j < gaussorder; j++){
             for (int k = 0; k < gaussorder; k++){
                 eta = GP[j];
                 xi = GP[k];
-                //printArray(GP,2);
 
                 // Shape functions matrix
                 vN = {(1 - xi) * (1 - eta), (1 + xi) * (1 - eta),
-                      (1 + xi) * (1 + eta), (1 - xi) * (1 + eta)};
+                      (1 + xi) * (1 + eta), (1 - xi) * (1 + eta)};  // One-operation assignment using valarray
                 vN *= 0.25;
                 for (int l = 0; l < nnode_elem; l++ ){N[l] = vN[l];};   // Copying values to normal array
 
                 // Derivative (gradient) matrix of the shape functions
                 vGN = {-(1 - eta), 1 - eta, 1 + eta, -(1 + eta),
-                -(1 - xi), -(1 + xi), 1 + xi, 1 - xi};
+                -(1 - xi), -(1 + xi), 1 + xi, 1 - xi};              // One-operation assignment using valarray
                 vGN *= 0.25;
                 for (int l = 0; l < 2 * nnode_elem; l++ ){GN[l] = vGN[l];}; // Copying values to normal array
-                //printMatrix(GN,2, nnode_elem);
 
                 // Jacobian matrix GN * eCoord
                 cblas_dgemm(CblasRowMajor,CblasNoTrans,CblasNoTrans, 2, 2, 4, 1, GN, 4, eCoord, 2, 0, J, 2);
-                //printMatrix(J, gaussorder, gaussorder);
-
-                // Jacobian determinant (2x2 determinant not worth doing using LAPACK P-L-U)
-                detJ = detMatrix2(J);
-
-                // Inverse Jacobian matrix (2x2 inverse not worth doing using LAPACK P-L-U)
-                invMatrix2(J, invJ);
-                //printMatrix(invJ,2,2);
+                detJ = detMatrix2(J);   // Jacobian determinant (2x2 determinant not worth doing using LAPACK P-L-U)
+                invMatrix2(J, invJ);    // Inverse Jacobian matrix (2x2 inverse not worth doing using LAPACK P-L-U)
 
                 // Calculating B = invJ * GN
                 cblas_dgemm(CblasRowMajor,CblasNoTrans,CblasNoTrans, 2, 4, 2, 1, invJ, 2, GN, 4, 0, B, 4);
-                //printMatrix(B,2,4);
 
-                // Ke = Ke + [B' * D * B] * th * DetJ * Wi * Wj
-                // Ke = Ke + np.dot(np.dot(B.T, D), B) * th * detJ * W[j] * W[k];
-
-                //Calculating C = B^T * D
-                cblas_dgemm(CblasRowMajor,CblasTrans,CblasNoTrans, 4, 2, 2, 1, B, 4, D, 2, 0, C, 2);
-                //printMatrix(C,4,2);
-
+                // Ke = Ke + [B' * D * B] * th * detJ * W[j] * W[k]
                 Ke_a = th * detJ * W[j] * W[k]; // BLAS alpha scalar to multiply with the matrix product
+
+                //Calculating C = B' * D
+                cblas_dgemm(CblasRowMajor,CblasTrans,CblasNoTrans, 4, 2, 2, 1, B, 4, D, 2, 0, C, 2);
 
                 // Calculating Ke += Ke_a * [C * B]
                 cblas_dgemm(CblasRowMajor,CblasNoTrans,CblasNoTrans, 4, 4, 2, Ke_a, C, 2, B, 4, 1, Ke, 4);
             }
         }
-        //printMatrix(Ke,nnode_elem, nnode_elem);
-        //printMatrix(J,2,2);
-
+        // -------------------------------- Assembling K-matrix --------------------------------------
         // Adding element stiffness matrices Ke to the global stiffness matrix K
         for (int j = 0; j < nnode_elem; j++){
             for (int k = 0; k < nnode_elem; k++) {
-                K[nnode * gDof[j] + gDof[k]] += Ke[nnode_elem * j + k];
-                //cout << Ke[nnode_elem * j + k] << endl;
+                K[nnode * eNodes[j] + eNodes[k]] += Ke[nnode_elem * j + k];
             }
         }
-
-
-
     }
-
     // Release dynamic memory from heap
     delete[] Ke;
 
-    //printMatrix(K,nnode, nnode);
-
-
     // ------------------ Apply boundary conditions -----------------
     // Compute nodal boundary flux vector f --- natural B.C
-    int mult_i, mult_j; // Index multiplier defined by which edge is loaded, used to record edge nodes
-    int nFluxNodes = 0; // Number of nodes on the chosen edge of the Plate
+    auto* fluxNodes = new int[max(nnode_x, nnode_y)];   // Always >= than the largest dimension, to avoid seg fault
+    int nFluxNodes = 0;                                 // Number of nodes on the chosen edge of the plate
 
-    // IMPROVE: Add command line input check and error message for default case
-    // IMPROVE: Add case with no flux boundary?
-
-    // Assigning number of fluxNodes and index multipliers based on edge chosen
-    switch (q_edge){
-        // Left edge
-        case 0: nFluxNodes = nnode_y;
-            mult_i = nnode_x;
-            mult_j = 0;
-            break;
-
-        // Top edge
-        case 1: nFluxNodes = nnode_x;
-            mult_i = 1;
-            mult_j = nnode_x * nelem_y;
-            break;
-
-        // Right edge
-        case 2: nFluxNodes = nnode_y;
-            mult_i = nnode_x;
-            mult_j = nelem_x;
-            break;
-
-        // Bottom edge
-        case 3: nFluxNodes = nnode_x;
-            mult_i = 1;
-            mult_j = 0;
-            break;
-
-        default:
-            break;
-    }
-
-    // Initialise fluxNodes with size appropriate to the edge chosen
-    auto* fluxNodes = new int[nFluxNodes];
-
-    // Recording which nodes are located along the edge chosen
-    for (int i = 0; i < nFluxNodes; i++){
-        fluxNodes[i] = NodeTopo[mult_i * i + mult_j];
-    }
-    //printMatrix(fluxNodes,1,nFluxNodes);
-
+    // Obtaining node numbers along edge based on edge selected
+    getBCNodes(q_edge, nnode_x, nnode_y, nFluxNodes, fluxNodes, NodeTopo);
 
     // ----- Defining flux load -----------------------
     int nbe = nFluxNodes - 1;  // Number of elements with flux load
@@ -445,48 +339,44 @@ int main(int argc, char* argv[]) {
     // Element boundary condition
     auto* n_bc = new double[4 * nbe];
     for (int i = 0; i < nbe; i++) {
-        n_bc[nbe * 0 + i] = fluxNodes[i];  // node 1
-        n_bc[nbe * 1 + i] = fluxNodes[i + 1];  // node 2
-        n_bc[nbe * 2 + i] = q0; // flux value at node 1
-        n_bc[nbe * 3 + i] = q0;  //flux value at node 2
+        n_bc[nbe * 0 + i] = fluxNodes[i];       // node 1
+        n_bc[nbe * 1 + i] = fluxNodes[i + 1];   // node 2
+        n_bc[nbe * 2 + i] = q0;                 // flux value at node 1
+        n_bc[nbe * 3 + i] = q0;                 //flux value at node 2
     }
-    //printMatrix(n_bc, 4, 5);
-
 
     // --------------- Calculate Nodal Flux Vector f -------------------
-    double f[nnode];  // initialize nodal flux vector
-    int node1; // first node along an element edge
-    int node2; // second node along an element edge
-    double x1, y1, x2, y2; // Coordinates of the two nodes connected to an element edge
-    double flux; // Flux at an element edge
-    double leng; // Length of element edge
-    double n_bce[2]; // initialising flux values at the two nodes connected to an element edge
-    zeros(f, nnode);
+    double f[nnode];            // initialize nodal flux vector
+    int node1;                  // first node along an element edge
+    int node2;                  // second node along an element edge
+    double x1, y1, x2, y2;      // Coordinates of the two nodes connected to an element edge
+    double flux;                // Flux at an element edge
+    double leng;                // Length of element edge
+    double n_bce[2];            // initialising flux values at the two nodes connected to an element edge
+    populate(f, nnode, 0);
 
     auto* fq = new double[2]; // initialize the nodal source vector
 
     for (int i = 0; i < nbe; i++) {
 
-        memset(fq, 0.0, sizeof(fq) * 2); // Reset fq to 0 for each new element
+        memset(fq, 0, sizeof(fq) * 2); // Reset fq to 0 for each new element
 
-        node1 = fluxNodes[i]; // Defining node 1 for the edge element
-        node2 = fluxNodes[i + 1]; // Defining node 2 for the edge element
-        n_bce[0] = n_bc[nbe * 2 + i];  // Flux value at node 1 of the edge element
-        n_bce[1] = n_bc[nbe * 3 + i];  // Flux value at node 2 of the edge element
-        //cout << "node1 = " << node1 << ", node2 = " << node2 << endl;
+        node1 = fluxNodes[i];           // Defining node 1 for the edge element
+        node2 = fluxNodes[i + 1];       // Defining node 2 for the edge element
+        n_bce[0] = n_bc[nbe * 2 + i];   // Flux value at node 1 of the edge element
+        n_bce[1] = n_bc[nbe * 3 + i];   // Flux value at node 2 of the edge element
 
         // Obtaining coordinates for the two nodes of the edge element using indices
-        x1 = X[nnode_x * getInd_i(node1,nnode_y) + getInd_j(node1,nnode_y)];  // x coord of the first node
-        y1 = Y[nnode_x * getInd_i(node1,nnode_y) + getInd_j(node1,nnode_y)];  // y coord of the first node
-        x2 = X[nnode_x * getInd_i(node2,nnode_y) + getInd_j(node2,nnode_y)];  // x coord of the first node
-        y2 = Y[nnode_x * getInd_i(node2,nnode_y) + getInd_j(node2,nnode_y)];  // y coord of the second node
+        x1 = getCoord(node1,X,nnode_x, nnode_y);  // x-coord of the first node
+        y1 = getCoord(node1,Y,nnode_x, nnode_y);  // y-coord of the first node
+        x2 = getCoord(node2,X,nnode_x, nnode_y);  // x-coord of the second node
+        y2 = getCoord(node2,Y,nnode_x, nnode_y);  // y-coord of the second node
 
         // Calculating length of element edge
         leng = sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));  // Element edge length
         detJ = leng / 2;  // 1D Jacobian
 
-        // IMPROVE: Check that sqrt(nnode_elem) is a good way of getting to 2
-        for (int j = 0; j < gaussorder; j++){  // integrate in xi direction (1D integration)
+        for (int j = 0; j < gaussorder; j++){  // Integrate in xi direction (1D integration)
 
             xi = GP[j];
 
@@ -494,78 +384,34 @@ int main(int argc, char* argv[]) {
             vN = {1 - xi, 1 + xi};
             vN *= 0.5;
             for (int l = 0; l < sqrt(nnode_elem); l++ ){N[l] = vN[l];};
-            //printMatrix(N,1,2);
 
+            // Calculating flux = [N * n_bce]
             flux = cblas_ddot(2, N, 1, n_bce, 1);
-            //cout << flux << endl;
 
             // CBLAS to perform fq += fq + N.T * flux * detJ * th * W[j];  // nodal flux
             cblas_daxpy(2, flux * detJ * th * W[j], N, 1, fq, 1);
-            //printMatrix(fq, 1, 2);
         }
-        //printMatrix(fq,1,2);
 
         //CBLAS to perform fq = -fq (Defining flux as negative integrals)
         cblas_dscal(2,-1,fq,1);
-        //printMatrix(fq,1,2);
 
         // Adding element flux to flux vector f
         f[node1] += fq[0];
         f[node2] += fq[1];
 
     }
-    //printMatrix(f, 1, nnode);
-
     // Release dynamic memory from the heap
     delete[] fluxNodes;
     delete[] n_bc;
     delete[] fq;
 
-
     // ------------------ Apply boundary conditions ----------------- Essential B.C.
-    int nTempNodes = 0; // Number of nodes on the edge of the plate
-
-    // IMPROVE: Add check to ensure user input does not select same edge for q and T?
-    // IMPROVE: Add case with no flux boundary?
-
-    // Assigning number of tempNodes and index multipliers based on edge chosen
-    switch (T_edge){
-        // Left edge
-        case 0: nTempNodes = nnode_y;
-            mult_i = nnode_x;
-            mult_j = 0;
-            break;
-
-            // Top edge
-        case 1: nTempNodes = nnode_x;
-            mult_i = 1;
-            mult_j = nnode_x * nelem_y;
-            break;
-
-            // Right edge
-        case 2: nTempNodes = nnode_y;
-            mult_i = nnode_x;
-            mult_j = nelem_x;
-            break;
-
-            // Bottom edge
-        case 3: nTempNodes = nnode_x;
-            mult_i = 1;
-            mult_j = 0;
-            break;
-
-        default:
-            break;
-    }
-
     // Initialise fluxNodes with size appropriate to the edge selected
-    auto* tempNodes = new int[nTempNodes];
+    auto* tempNodes = new int[max(nnode_x, nnode_y)];   // Always >= than the largest dimension, to avoid seg fault
+    int nTempNodes = 0;                                 // Number of nodes on the edge of the plate
 
-    // Recording which nodes are located along the edge chosen
-    for (int i = 0; i < nTempNodes; i++){
-        tempNodes[i] = NodeTopo[mult_i * i + mult_j];
-    }
-    //printMatrix(tempNodes,1,nTempNodes);
+    // Obtaining node numbers along edge based on edge selected
+    getBCNodes(T_edge, nnode_x, nnode_y, nTempNodes, tempNodes, NodeTopo);
 
     // Initialising matrix containing nodes along chosen edge and their constant temps
     auto* BC = new double[nTempNodes * 2];
@@ -574,37 +420,33 @@ int main(int argc, char* argv[]) {
         BC[2 * i + 0] = tempNodes[i];
         BC[2 * i + 1] = T0;
     }
-    //printMatrix(BC,nTempNodes,2);
 
     // ----------- Assembling global temperature vector ------------
-    double T[nnode]; // Initialize nodal temperature vector
-    zeros(T, nnode);
+    double T[nnode];  // Initialize nodal temperature vector
+    populate(T, nnode, 0);
 
     // Setting temperatures of nodes along chosen edge to T0
     for (int i = 0; i < nTempNodes; i++){
         T[tempNodes[i]] = BC[2 * i + 1];
-        //cout << T[i] << endl;
     }
-
 
     // --------------------- Partition matrices ----------------------------
     // IMPROVE: Increase efficiency by masking using element-wise operations rather than loops
 
     const int rDof = nnode - nTempNodes;// Number of nodes not affected by temp BC
-    int mask_E[nnode];            // Known temperature Dof
+    int mask_E[nnode];                  // Known temperature Dof
     double T_E[nTempNodes];             // Known values of T
     double T_F[nnode-nTempNodes];       // Unknown values of T
     double f_E[nTempNodes];             // Unknown values of f
     double f_F[rDof];                   // Known values of f
     double rhs[rDof];                   // RHS of linear solver
-    zeros(mask_E, nnode);
+    populate(mask_E, nnode, 0);
 
 
     // Creating mask array for known values. If the entry of the array is known -> entry = 1
     for (int i = 0; i < nTempNodes; i++){
         mask_E[tempNodes[i]] = 1;
     }
-    //printMatrix(mask_E,1,66);
 
     // Initialising arbitrary counters
     int counter1 = 0;
@@ -624,9 +466,6 @@ int main(int argc, char* argv[]) {
             counter2++;
         }
     }
-    //printMatrix(rhs, 1, rDof);
-    //printMatrix(T_E,1,nTempNodes);
-    //printMatrix(f_F,1,rDof);
 
     // Initialising partition matrices
     double K_EE[nTempNodes * nTempNodes];
@@ -654,18 +493,12 @@ int main(int argc, char* argv[]) {
             }
         }
     }
-    //printMatrix(K,nnode,nnode);
-    //printMatrix(K_EE,nTempNodes,nTempNodes);
-    //printMatrix(K_EF,nTempNodes,rDof);
-    //printMatrix(K_FF,rDof,rDof);
 
     // Pre-setting rhs to f_F, because rhs = f_F + ...cblas routine
     cblas_dcopy(rDof, f_F, 1, rhs, 1);
 
     // Calculating RHS = f_F - [K_EF^T * T_E]
-    //printMatrix(rhs, 1, rDof);
     cblas_dgemv(CblasRowMajor, CblasTrans, nTempNodes, rDof, -1, K_EF, rDof, T_E, 1, 1, rhs, 1);
-    //printMatrix(rhs, 1, rDof);
 
     // Initialising variables required by LAPACK to solve linear system
     int ipiv[rDof];
@@ -676,27 +509,20 @@ int main(int argc, char* argv[]) {
 
     // Copying output from LAPACK to the correct variable T_F
     cblas_dcopy(rDof, rhs, 1, T_F, 1);
-    //printMatrix(T_F, 1, rDof);
-
-
 
     // ---------------------- Calculating the reaction f_E --------------------
     double f_E1[nTempNodes]; // Temporary array to store values for BLAS operations
-
 
     // Calculating f_E = [K_EE * T_E] + [K_EF * T_F]
 
     // Calculating f_E = K_EE * T_E
     cblas_dgemv(CblasRowMajor, CblasNoTrans, nTempNodes, nTempNodes, 1, K_EE, nTempNodes, T_E, 1, 0, f_E, 1);
-    //printMatrix(f_E,1,nTempNodes);
 
     // Calculating f_E1 = K_EF * T_F
     cblas_dgemv(CblasRowMajor, CblasNoTrans, nTempNodes, rDof, 1, K_EF, rDof, T_F, 1, 0, f_E1, 1);
-    //printMatrix(T_F, 1, rDof);
 
     // Calculating f_E = f_E + f_E1
     cblas_daxpy(nTempNodes,1,f_E1,1,f_E,1);
-    //printMatrix(f_E, 1, nTempNodes);
 
     counter1 = 0;
     counter2 = 0;
@@ -713,60 +539,21 @@ int main(int argc, char* argv[]) {
             counter2++;
         }
     }
-    printMatrix(T,nnode_x, nnode_y);
-    //printMatrix(f,nnode_x, nnode_y);
-
 
     // Output result to .vtk-file to plot using ParaView
-    WriteVtkFile(nnode_elem, nnode, nelem, Coord, ElemNode, T);
-
-
+    WriteVtkFile(nnode_elem, nnode, nelem, Coord, ElemNode, T, casenum);
 
     // Cleaning remaining dynamic arrays from heap
     delete[] tempNodes;
     delete[] BC;
 
-    //MPI_Finalize();
+    MPI_Finalize();
+
+    //FIX: Remove before submission
+    printMatrix(T,nnode_x, nnode_y);
 
     return 0;
 }
 
-
-void zeros(double* a, int length){
-    for (int i = 0; i < length; i++){
-        a[i] = 0;
-    }
-}
-
-void zeros(int* a, int length){
-    for (int i = 0; i < length; i++){
-        a[i] = 0;
-    }
-}
-
-int getInd_i(int node, int nnode_y){
-    int i = node % (nnode_y); // Nodal Row number
-    return i;
-}
-
-int getInd_j(int node, int nnode_y){
-    int j = (node - (node % (nnode_y))) / (nnode_y);  // Nodal Column number
-    return j;
-}
-
-
-double detMatrix2(double* A){
-    double detJ;
-    detJ = A[3] * A[0] - A[2] * A[1];
-    return detJ;
-}
-
-
-void invMatrix2(double* J, double* invJ){
-    double detJ = detMatrix2(J);
-    invJ[0] = J[3] / detJ;
-    invJ[1] = -J[1] / detJ;
-    invJ[2] = -J[2] / detJ;
-    invJ[3] = J[0] / detJ;
-}
-
+//FIX: Remove before submission
+#pragma clang diagnostic pop

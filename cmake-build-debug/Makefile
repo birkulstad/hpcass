@@ -123,6 +123,33 @@ hpcass/fast:
 	$(MAKE) -f CMakeFiles/hpcass.dir/build.make CMakeFiles/hpcass.dir/build
 .PHONY : hpcass/fast
 
+init.o: init.cpp.o
+
+.PHONY : init.o
+
+# target to build an object file
+init.cpp.o:
+	$(MAKE) -f CMakeFiles/hpcass.dir/build.make CMakeFiles/hpcass.dir/init.cpp.o
+.PHONY : init.cpp.o
+
+init.i: init.cpp.i
+
+.PHONY : init.i
+
+# target to preprocess a source file
+init.cpp.i:
+	$(MAKE) -f CMakeFiles/hpcass.dir/build.make CMakeFiles/hpcass.dir/init.cpp.i
+.PHONY : init.cpp.i
+
+init.s: init.cpp.s
+
+.PHONY : init.s
+
+# target to generate assembly for a file
+init.cpp.s:
+	$(MAKE) -f CMakeFiles/hpcass.dir/build.make CMakeFiles/hpcass.dir/init.cpp.s
+.PHONY : init.cpp.s
+
 io.o: io.cpp.o
 
 .PHONY : io.o
@@ -177,6 +204,33 @@ main.cpp.s:
 	$(MAKE) -f CMakeFiles/hpcass.dir/build.make CMakeFiles/hpcass.dir/main.cpp.s
 .PHONY : main.cpp.s
 
+oper.o: oper.cpp.o
+
+.PHONY : oper.o
+
+# target to build an object file
+oper.cpp.o:
+	$(MAKE) -f CMakeFiles/hpcass.dir/build.make CMakeFiles/hpcass.dir/oper.cpp.o
+.PHONY : oper.cpp.o
+
+oper.i: oper.cpp.i
+
+.PHONY : oper.i
+
+# target to preprocess a source file
+oper.cpp.i:
+	$(MAKE) -f CMakeFiles/hpcass.dir/build.make CMakeFiles/hpcass.dir/oper.cpp.i
+.PHONY : oper.cpp.i
+
+oper.s: oper.cpp.s
+
+.PHONY : oper.s
+
+# target to generate assembly for a file
+oper.cpp.s:
+	$(MAKE) -f CMakeFiles/hpcass.dir/build.make CMakeFiles/hpcass.dir/oper.cpp.s
+.PHONY : oper.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -186,12 +240,18 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
 	@echo "... hpcass"
+	@echo "... init.o"
+	@echo "... init.i"
+	@echo "... init.s"
 	@echo "... io.o"
 	@echo "... io.i"
 	@echo "... io.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
+	@echo "... oper.o"
+	@echo "... oper.i"
+	@echo "... oper.s"
 .PHONY : help
 
 

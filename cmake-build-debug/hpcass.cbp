@@ -82,6 +82,12 @@
 				</MakeCommands>
 			</Target>
 		</Build>
+		<Unit filename="/Users/birkulstad/hpc-exercises/hpcass/init.cpp">
+			<Option target="hpcass"/>
+		</Unit>
+		<Unit filename="/Users/birkulstad/hpc-exercises/hpcass/init.h">
+			<Option target="hpcass"/>
+		</Unit>
 		<Unit filename="/Users/birkulstad/hpc-exercises/hpcass/io.cpp">
 			<Option target="hpcass"/>
 		</Unit>
@@ -89,6 +95,12 @@
 			<Option target="hpcass"/>
 		</Unit>
 		<Unit filename="/Users/birkulstad/hpc-exercises/hpcass/main.cpp">
+			<Option target="hpcass"/>
+		</Unit>
+		<Unit filename="/Users/birkulstad/hpc-exercises/hpcass/oper.cpp">
+			<Option target="hpcass"/>
+		</Unit>
+		<Unit filename="/Users/birkulstad/hpc-exercises/hpcass/oper.h">
 			<Option target="hpcass"/>
 		</Unit>
 		<Unit filename="/Users/birkulstad/hpc-exercises/hpcass/CMakeLists.txt">

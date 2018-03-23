@@ -3,7 +3,7 @@ project(hpcass)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(hpcass main.cpp io.h io.cpp)
+add_executable(hpcass main.cpp io.h io.cpp init.cpp init.h oper.cpp oper.h)
 
 find_package(BLAS REQUIRED)
 

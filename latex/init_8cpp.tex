@@ -1,0 +1,129 @@
+\hypertarget{init_8cpp}{}\section{init.\+cpp File Reference}
+\label{init_8cpp}\index{init.\+cpp@{init.\+cpp}}
+{\ttfamily \#include \char`\"{}init.\+h\char`\"{}}\newline
+{\ttfamily \#include $<$valarray$>$}\newline
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{init_8cpp_abf9d7d732ac74d0c4236df0a0e7f2930}{populate}} (double $\ast$a, int length, double val)
+\begin{DoxyCompactList}\small\item\em Populates an array of doubles with a constant value. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{init_8cpp_a3a4db2152b905b704e06101766501f4c}{populate}} (int $\ast$a, int length, int val)
+\begin{DoxyCompactList}\small\item\em Populates an array of doubles with a constant value. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{init_8cpp_ad1e8a0b158ce5c771d9e3ba61c45dee5}{get\+B\+C\+Nodes}} (int edge, int nnode\+\_\+x, int nnode\+\_\+y, int \&n\+B\+C\+Nodes, int $\ast$B\+C\+Nodes, int $\ast$Node\+Topo)
+\begin{DoxyCompactList}\small\item\em writes the node numbers of the nodes along an edge selected for a boundary condition into B\+C\+Nodes \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{init_8cpp_a50350225c1a6a2096b30c62b09d71707}{edgeswitch}} (int edge, int nnode\+\_\+x, int nnode\+\_\+y, int \&n\+B\+C\+Nodes, int \&mult\+\_\+i, int \&mult\+\_\+j)
+\begin{DoxyCompactList}\small\item\em returns the number of nodes along the selected edge together with multipliers mult\+\_\+i and mult\+\_\+j \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{init_8cpp_a23310125949490bfb05eb31b62c43c74}{linspace}} (double begin, double end, int nnode\+\_\+x, double $\ast$arr)
+\begin{DoxyCompactList}\small\item\em returns an array with nnode\+\_\+x coordinates distributed over the length (end-\/begin) \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Function Documentation}
+\mbox{\Hypertarget{init_8cpp_a50350225c1a6a2096b30c62b09d71707}\label{init_8cpp_a50350225c1a6a2096b30c62b09d71707}} 
+\index{init.\+cpp@{init.\+cpp}!edgeswitch@{edgeswitch}}
+\index{edgeswitch@{edgeswitch}!init.\+cpp@{init.\+cpp}}
+\subsubsection{\texorpdfstring{edgeswitch()}{edgeswitch()}}
+{\footnotesize\ttfamily void edgeswitch (\begin{DoxyParamCaption}\item[{int}]{edge,  }\item[{int}]{nnode\+\_\+x,  }\item[{int}]{nnode\+\_\+y,  }\item[{int \&}]{n\+B\+C\+Nodes,  }\item[{int \&}]{mult\+\_\+i,  }\item[{int \&}]{mult\+\_\+j }\end{DoxyParamCaption})}
+
+
+
+returns the number of nodes along the selected edge together with multipliers mult\+\_\+i and mult\+\_\+j 
+
+
+\begin{DoxyParams}{Parameters}
+{\em edge} & The edge selected for which to return number of nodes and multipliers \\
+\hline
+{\em nnode\+\_\+x} & Number of nodes in x of the mesh \\
+\hline
+{\em nnode\+\_\+y} & Number of nodes in y of the mesh \\
+\hline
+{\em n\+B\+C\+Nodes} & Returning the number of nodes along the selected edge \\
+\hline
+{\em mult\+\_\+i} & i-\/multiplier to determine node numbers along the edge \\
+\hline
+{\em mult\+\_\+j} & j-\/multiplier to determine node numbers along the edge\\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{init_8cpp_ad1e8a0b158ce5c771d9e3ba61c45dee5}\label{init_8cpp_ad1e8a0b158ce5c771d9e3ba61c45dee5}} 
+\index{init.\+cpp@{init.\+cpp}!get\+B\+C\+Nodes@{get\+B\+C\+Nodes}}
+\index{get\+B\+C\+Nodes@{get\+B\+C\+Nodes}!init.\+cpp@{init.\+cpp}}
+\subsubsection{\texorpdfstring{get\+B\+C\+Nodes()}{getBCNodes()}}
+{\footnotesize\ttfamily void get\+B\+C\+Nodes (\begin{DoxyParamCaption}\item[{int}]{edge,  }\item[{int}]{nnode\+\_\+x,  }\item[{int}]{nnode\+\_\+y,  }\item[{int \&}]{n\+B\+C\+Nodes,  }\item[{int $\ast$}]{B\+C\+Nodes,  }\item[{int $\ast$}]{Node\+Topo }\end{DoxyParamCaption})}
+
+
+
+writes the node numbers of the nodes along an edge selected for a boundary condition into B\+C\+Nodes 
+
+
+\begin{DoxyParams}{Parameters}
+{\em edge} & The edge selected for the boundary condition \\
+\hline
+{\em nnode\+\_\+x} & Number of nodes in the x \\
+\hline
+{\em nnode\+\_\+y} & Number of nodes in the y \\
+\hline
+{\em n\+B\+C\+Nodes} & Number of nodes along the selected edge \\
+\hline
+{\em B\+C\+Nodes} & The nodes along the selected edge \\
+\hline
+{\em Node\+Topo} & The Node Topology matrix\\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{init_8cpp_a23310125949490bfb05eb31b62c43c74}\label{init_8cpp_a23310125949490bfb05eb31b62c43c74}} 
+\index{init.\+cpp@{init.\+cpp}!linspace@{linspace}}
+\index{linspace@{linspace}!init.\+cpp@{init.\+cpp}}
+\subsubsection{\texorpdfstring{linspace()}{linspace()}}
+{\footnotesize\ttfamily void linspace (\begin{DoxyParamCaption}\item[{double}]{begin,  }\item[{double}]{end,  }\item[{int}]{nnode\+\_\+x,  }\item[{double $\ast$}]{arr }\end{DoxyParamCaption})}
+
+
+
+returns an array with nnode\+\_\+x coordinates distributed over the length (end-\/begin) 
+
+
+\begin{DoxyParams}{Parameters}
+{\em begin} & Beginning of the linear space \\
+\hline
+{\em end} & End of the linear space \\
+\hline
+{\em nnode\+\_\+x} & Discretisation of the linear space \\
+\hline
+{\em arr} & Arrayu to store the coordinates in\\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{init_8cpp_abf9d7d732ac74d0c4236df0a0e7f2930}\label{init_8cpp_abf9d7d732ac74d0c4236df0a0e7f2930}} 
+\index{init.\+cpp@{init.\+cpp}!populate@{populate}}
+\index{populate@{populate}!init.\+cpp@{init.\+cpp}}
+\subsubsection{\texorpdfstring{populate()}{populate()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily void populate (\begin{DoxyParamCaption}\item[{double $\ast$}]{a,  }\item[{int}]{length,  }\item[{double}]{val }\end{DoxyParamCaption})}
+
+
+
+Populates an array of doubles with a constant value. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em a} & The array to populate \\
+\hline
+{\em length} & Length of the array to populate \\
+\hline
+{\em val} & The value to populate with\\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{init_8cpp_a3a4db2152b905b704e06101766501f4c}\label{init_8cpp_a3a4db2152b905b704e06101766501f4c}} 
+\index{init.\+cpp@{init.\+cpp}!populate@{populate}}
+\index{populate@{populate}!init.\+cpp@{init.\+cpp}}
+\subsubsection{\texorpdfstring{populate()}{populate()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily void populate (\begin{DoxyParamCaption}\item[{int $\ast$}]{a,  }\item[{int}]{length,  }\item[{int}]{val }\end{DoxyParamCaption})}
+
+
+
+Populates an array of doubles with a constant value. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em a} & The array to populate \\
+\hline
+{\em length} & Length of the array to populate \\
+\hline
+{\em val} & The value to populate with\\
+\hline
+\end{DoxyParams}

@@ -1,104 +1,25 @@
 \hypertarget{main_8cpp}{}\section{main.\+cpp File Reference}
 \label{main_8cpp}\index{main.\+cpp@{main.\+cpp}}
+{\ttfamily \#include $<$cstring$>$}\newline
 {\ttfamily \#include $<$iostream$>$}\newline
 {\ttfamily \#include $<$cmath$>$}\newline
-{\ttfamily \#include $<$iomanip$>$}\newline
 {\ttfamily \#include $<$valarray$>$}\newline
-{\ttfamily \#include $<$fstream$>$}\newline
-{\ttfamily \#include \char`\"{}cblas.\+h\char`\"{}}\newline
-{\ttfamily \#include $<$limits$>$}\newline
-{\ttfamily \#include $<$cstring$>$}\newline
-{\ttfamily \#include \char`\"{}colormod.\+h\char`\"{}}\newline
-{\ttfamily \#include \char`\"{}io.\+h\char`\"{}}\newline
 {\ttfamily \#include $<$mpi.\+h$>$}\newline
-{\ttfamily \#include $<$cstdlib$>$}\newline
-{\ttfamily \#include $<$cstdio$>$}\newline
-{\ttfamily \#include $<$vector$>$}\newline
-{\ttfamily \#include $<$numeric$>$}\newline
-{\ttfamily \#include $<$functional$>$}\newline
-{\ttfamily \#include $<$algorithm$>$}\newline
-{\ttfamily \#include $<$ctime$>$}\newline
-\subsection*{Macros}
-\begin{DoxyCompactItemize}
-\item 
-\#define \mbox{\hyperlink{main_8cpp_a9b91c72ded7de2f0b393ea75de53929b}{F77\+N\+A\+ME}}(x)~x\#\#\+\_\+
-\end{DoxyCompactItemize}
+{\ttfamily \#include \char`\"{}cblas.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}io.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}init.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}oper.\+h\char`\"{}}\newline
 \subsection*{Functions}
 \begin{DoxyCompactItemize}
-\item 
-void \mbox{\hyperlink{main_8cpp_a9b91c72ded7de2f0b393ea75de53929b}{F77\+N\+A\+ME}}() \mbox{\hyperlink{main_8cpp_a16a29d9b4c09920de08104c74871e7f5}{dgesv}} (const int \&n, const int \&nrhs, const double $\ast$A, const int \&lda, int $\ast$ipiv, double $\ast$B, const int \&ldb, int \&info)
-\item 
-double \mbox{\hyperlink{main_8cpp_acb7f0ed8aa1e2cedae630284711801a5}{det\+Matrix2}} (double $\ast$)
-\item 
-void \mbox{\hyperlink{main_8cpp_a4ecc8caf38d3ce41629fd13465823a29}{inv\+Matrix2}} (double $\ast$, double $\ast$)
-\item 
-int \mbox{\hyperlink{main_8cpp_a409a36b85ac26915628e066c6fef81c0}{get\+Ind\+\_\+i}} (int, int)
-\item 
-int \mbox{\hyperlink{main_8cpp_a5cf5c24afac47ac20b6ded42691f6009}{get\+Ind\+\_\+j}} (int, int)
-\item 
-void \mbox{\hyperlink{main_8cpp_a114c6cc350b21e50b597434d778703cb}{zeros}} (double $\ast$, int)
-\item 
-void \mbox{\hyperlink{main_8cpp_a756b02e2f48c16e971fc9c2597b97bb2}{zeros}} (int $\ast$, int)
 \item 
 int \mbox{\hyperlink{main_8cpp_a0ddf1224851353fc92bfbff6f499fa97}{main}} (int argc, char $\ast$argv\mbox{[}$\,$\mbox{]})
 \end{DoxyCompactItemize}
 
 
-\subsection{Macro Definition Documentation}
-\mbox{\Hypertarget{main_8cpp_a9b91c72ded7de2f0b393ea75de53929b}\label{main_8cpp_a9b91c72ded7de2f0b393ea75de53929b}} 
-\index{main.\+cpp@{main.\+cpp}!F77\+N\+A\+ME@{F77\+N\+A\+ME}}
-\index{F77\+N\+A\+ME@{F77\+N\+A\+ME}!main.\+cpp@{main.\+cpp}}
-\subsubsection{\texorpdfstring{F77\+N\+A\+ME}{F77NAME}}
-{\footnotesize\ttfamily \#define F77\+N\+A\+ME(\begin{DoxyParamCaption}\item[{}]{x }\end{DoxyParamCaption})~x\#\#\+\_\+}
-
-
-
 \subsection{Function Documentation}
-\mbox{\Hypertarget{main_8cpp_acb7f0ed8aa1e2cedae630284711801a5}\label{main_8cpp_acb7f0ed8aa1e2cedae630284711801a5}} 
-\index{main.\+cpp@{main.\+cpp}!det\+Matrix2@{det\+Matrix2}}
-\index{det\+Matrix2@{det\+Matrix2}!main.\+cpp@{main.\+cpp}}
-\subsubsection{\texorpdfstring{det\+Matrix2()}{detMatrix2()}}
-{\footnotesize\ttfamily double det\+Matrix2 (\begin{DoxyParamCaption}\item[{double $\ast$}]{A }\end{DoxyParamCaption})}
-
-\mbox{\Hypertarget{main_8cpp_a16a29d9b4c09920de08104c74871e7f5}\label{main_8cpp_a16a29d9b4c09920de08104c74871e7f5}} 
-\index{main.\+cpp@{main.\+cpp}!dgesv@{dgesv}}
-\index{dgesv@{dgesv}!main.\+cpp@{main.\+cpp}}
-\subsubsection{\texorpdfstring{dgesv()}{dgesv()}}
-{\footnotesize\ttfamily void \mbox{\hyperlink{main_8cpp_a9b91c72ded7de2f0b393ea75de53929b}{F77\+N\+A\+ME}}() dgesv (\begin{DoxyParamCaption}\item[{const int \&}]{n,  }\item[{const int \&}]{nrhs,  }\item[{const double $\ast$}]{A,  }\item[{const int \&}]{lda,  }\item[{int $\ast$}]{ipiv,  }\item[{double $\ast$}]{B,  }\item[{const int \&}]{ldb,  }\item[{int \&}]{info }\end{DoxyParamCaption})}
-
-\mbox{\Hypertarget{main_8cpp_a409a36b85ac26915628e066c6fef81c0}\label{main_8cpp_a409a36b85ac26915628e066c6fef81c0}} 
-\index{main.\+cpp@{main.\+cpp}!get\+Ind\+\_\+i@{get\+Ind\+\_\+i}}
-\index{get\+Ind\+\_\+i@{get\+Ind\+\_\+i}!main.\+cpp@{main.\+cpp}}
-\subsubsection{\texorpdfstring{get\+Ind\+\_\+i()}{getInd\_i()}}
-{\footnotesize\ttfamily int get\+Ind\+\_\+i (\begin{DoxyParamCaption}\item[{int}]{node,  }\item[{int}]{nnode\+\_\+y }\end{DoxyParamCaption})}
-
-\mbox{\Hypertarget{main_8cpp_a5cf5c24afac47ac20b6ded42691f6009}\label{main_8cpp_a5cf5c24afac47ac20b6ded42691f6009}} 
-\index{main.\+cpp@{main.\+cpp}!get\+Ind\+\_\+j@{get\+Ind\+\_\+j}}
-\index{get\+Ind\+\_\+j@{get\+Ind\+\_\+j}!main.\+cpp@{main.\+cpp}}
-\subsubsection{\texorpdfstring{get\+Ind\+\_\+j()}{getInd\_j()}}
-{\footnotesize\ttfamily int get\+Ind\+\_\+j (\begin{DoxyParamCaption}\item[{int}]{node,  }\item[{int}]{nnode\+\_\+y }\end{DoxyParamCaption})}
-
-\mbox{\Hypertarget{main_8cpp_a4ecc8caf38d3ce41629fd13465823a29}\label{main_8cpp_a4ecc8caf38d3ce41629fd13465823a29}} 
-\index{main.\+cpp@{main.\+cpp}!inv\+Matrix2@{inv\+Matrix2}}
-\index{inv\+Matrix2@{inv\+Matrix2}!main.\+cpp@{main.\+cpp}}
-\subsubsection{\texorpdfstring{inv\+Matrix2()}{invMatrix2()}}
-{\footnotesize\ttfamily void inv\+Matrix2 (\begin{DoxyParamCaption}\item[{double $\ast$}]{J,  }\item[{double $\ast$}]{invJ }\end{DoxyParamCaption})}
-
 \mbox{\Hypertarget{main_8cpp_a0ddf1224851353fc92bfbff6f499fa97}\label{main_8cpp_a0ddf1224851353fc92bfbff6f499fa97}} 
 \index{main.\+cpp@{main.\+cpp}!main@{main}}
 \index{main@{main}!main.\+cpp@{main.\+cpp}}
 \subsubsection{\texorpdfstring{main()}{main()}}
 {\footnotesize\ttfamily int main (\begin{DoxyParamCaption}\item[{int}]{argc,  }\item[{char $\ast$}]{argv\mbox{[}$\,$\mbox{]} }\end{DoxyParamCaption})}
-
-\mbox{\Hypertarget{main_8cpp_a114c6cc350b21e50b597434d778703cb}\label{main_8cpp_a114c6cc350b21e50b597434d778703cb}} 
-\index{main.\+cpp@{main.\+cpp}!zeros@{zeros}}
-\index{zeros@{zeros}!main.\+cpp@{main.\+cpp}}
-\subsubsection{\texorpdfstring{zeros()}{zeros()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
-{\footnotesize\ttfamily void zeros (\begin{DoxyParamCaption}\item[{double $\ast$}]{a,  }\item[{int}]{length }\end{DoxyParamCaption})}
-
-\mbox{\Hypertarget{main_8cpp_a756b02e2f48c16e971fc9c2597b97bb2}\label{main_8cpp_a756b02e2f48c16e971fc9c2597b97bb2}} 
-\index{main.\+cpp@{main.\+cpp}!zeros@{zeros}}
-\index{zeros@{zeros}!main.\+cpp@{main.\+cpp}}
-\subsubsection{\texorpdfstring{zeros()}{zeros()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
-{\footnotesize\ttfamily void zeros (\begin{DoxyParamCaption}\item[{int $\ast$}]{a,  }\item[{int}]{length }\end{DoxyParamCaption})}
 

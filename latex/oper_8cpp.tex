@@ -1,0 +1,113 @@
+\hypertarget{oper_8cpp}{}\section{oper.\+cpp File Reference}
+\label{oper_8cpp}\index{oper.\+cpp@{oper.\+cpp}}
+{\ttfamily \#include \char`\"{}oper.\+h\char`\"{}}\newline
+{\ttfamily \#include $<$cmath$>$}\newline
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+int \mbox{\hyperlink{oper_8cpp_a78966a97686fc99bdcea898c5a400c69}{get\+Ind\+\_\+i}} (int node, int nnode\+\_\+y)
+\begin{DoxyCompactList}\small\item\em obtains the i-\/index of a node, based on the position of the node\textquotesingle{}s number in the \mbox{[}nnode\+\_\+y x nnode\+\_\+x\mbox{]} Node\+Topo matrix \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{oper_8cpp_abe2ebd8bb7290f6ba8f1aee838b7d854}{get\+Ind\+\_\+j}} (int node, int nnode\+\_\+y)
+\begin{DoxyCompactList}\small\item\em obtains the j-\/index of a node, based on the position of the node\textquotesingle{}s number in the \mbox{[}nnode\+\_\+y x nnode\+\_\+x\mbox{]} Node\+Topo matrix \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{oper_8cpp_a24e3228a1a565fd763053173afc6afd0}{get\+Coord}} (int node\+ID, double $\ast$X, int nnode\+\_\+x, int nnode\+\_\+y)
+\begin{DoxyCompactList}\small\item\em return the coordinate of a numbered node based on the coordinate matrix entered \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{oper_8cpp_a38612aec721774371a72eb6e5ec6dec3}{det\+Matrix2}} (double $\ast$A)
+\begin{DoxyCompactList}\small\item\em calculates the determinant of a 2x2 matrix \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{oper_8cpp_ad05dc705b9baead08d652a70190881c9}{inv\+Matrix2}} (double $\ast$J, double $\ast$invJ)
+\begin{DoxyCompactList}\small\item\em calculates the inverse of a 2x2 matrix \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Function Documentation}
+\mbox{\Hypertarget{oper_8cpp_a38612aec721774371a72eb6e5ec6dec3}\label{oper_8cpp_a38612aec721774371a72eb6e5ec6dec3}} 
+\index{oper.\+cpp@{oper.\+cpp}!det\+Matrix2@{det\+Matrix2}}
+\index{det\+Matrix2@{det\+Matrix2}!oper.\+cpp@{oper.\+cpp}}
+\subsubsection{\texorpdfstring{det\+Matrix2()}{detMatrix2()}}
+{\footnotesize\ttfamily double det\+Matrix2 (\begin{DoxyParamCaption}\item[{double $\ast$}]{A }\end{DoxyParamCaption})}
+
+
+
+calculates the determinant of a 2x2 matrix 
+
+
+\begin{DoxyParams}{Parameters}
+{\em A} & matrix to calculate det(\+A) for \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+detJ the determinant of =A
+\end{DoxyReturn}
+\mbox{\Hypertarget{oper_8cpp_a24e3228a1a565fd763053173afc6afd0}\label{oper_8cpp_a24e3228a1a565fd763053173afc6afd0}} 
+\index{oper.\+cpp@{oper.\+cpp}!get\+Coord@{get\+Coord}}
+\index{get\+Coord@{get\+Coord}!oper.\+cpp@{oper.\+cpp}}
+\subsubsection{\texorpdfstring{get\+Coord()}{getCoord()}}
+{\footnotesize\ttfamily double get\+Coord (\begin{DoxyParamCaption}\item[{int}]{node\+ID,  }\item[{double $\ast$}]{X,  }\item[{int}]{nnode\+\_\+x,  }\item[{int}]{nnode\+\_\+y }\end{DoxyParamCaption})}
+
+
+
+return the coordinate of a numbered node based on the coordinate matrix entered 
+
+
+\begin{DoxyParams}{Parameters}
+{\em node\+ID} & The node number, based on Node\+Topo matrix \\
+\hline
+{\em X} & Coordinate matrix (Usually X or Y) \\
+\hline
+{\em nnode\+\_\+x} & Number of nodes in x \\
+\hline
+{\em nnode\+\_\+y} & Number of nodes in y \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+val The X-\/coordinate of the node\+ID
+\end{DoxyReturn}
+\mbox{\Hypertarget{oper_8cpp_a78966a97686fc99bdcea898c5a400c69}\label{oper_8cpp_a78966a97686fc99bdcea898c5a400c69}} 
+\index{oper.\+cpp@{oper.\+cpp}!get\+Ind\+\_\+i@{get\+Ind\+\_\+i}}
+\index{get\+Ind\+\_\+i@{get\+Ind\+\_\+i}!oper.\+cpp@{oper.\+cpp}}
+\subsubsection{\texorpdfstring{get\+Ind\+\_\+i()}{getInd\_i()}}
+{\footnotesize\ttfamily int get\+Ind\+\_\+i (\begin{DoxyParamCaption}\item[{int}]{node,  }\item[{int}]{nnode\+\_\+y }\end{DoxyParamCaption})}
+
+
+
+obtains the i-\/index of a node, based on the position of the node\textquotesingle{}s number in the \mbox{[}nnode\+\_\+y x nnode\+\_\+x\mbox{]} Node\+Topo matrix 
+
+The i index is based on a row major storage convention in the matrix of which the index will be used to extract from e.\+g. A\mbox{[}rowlength $\ast$ i + j\mbox{]} 
+\begin{DoxyParams}{Parameters}
+{\em node} & the number of the node in the Node\+Topo(logy) matrix \\
+\hline
+{\em nnode\+\_\+y} & number of nodes in y, or equivalently number of nodal rows\\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{oper_8cpp_abe2ebd8bb7290f6ba8f1aee838b7d854}\label{oper_8cpp_abe2ebd8bb7290f6ba8f1aee838b7d854}} 
+\index{oper.\+cpp@{oper.\+cpp}!get\+Ind\+\_\+j@{get\+Ind\+\_\+j}}
+\index{get\+Ind\+\_\+j@{get\+Ind\+\_\+j}!oper.\+cpp@{oper.\+cpp}}
+\subsubsection{\texorpdfstring{get\+Ind\+\_\+j()}{getInd\_j()}}
+{\footnotesize\ttfamily int get\+Ind\+\_\+j (\begin{DoxyParamCaption}\item[{int}]{node,  }\item[{int}]{nnode\+\_\+y }\end{DoxyParamCaption})}
+
+
+
+obtains the j-\/index of a node, based on the position of the node\textquotesingle{}s number in the \mbox{[}nnode\+\_\+y x nnode\+\_\+x\mbox{]} Node\+Topo matrix 
+
+The j index is based on a row major storage convention in the matrix of which the index will be used to extract from e.\+g. A\mbox{[}rowlength $\ast$ i + j\mbox{]} 
+\begin{DoxyParams}{Parameters}
+{\em node} & the number of the node in the Node\+Topo(logy) matrix \\
+\hline
+{\em nnode\+\_\+x} & number of nodes in x, or equivalently number of nodal columns\\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{oper_8cpp_ad05dc705b9baead08d652a70190881c9}\label{oper_8cpp_ad05dc705b9baead08d652a70190881c9}} 
+\index{oper.\+cpp@{oper.\+cpp}!inv\+Matrix2@{inv\+Matrix2}}
+\index{inv\+Matrix2@{inv\+Matrix2}!oper.\+cpp@{oper.\+cpp}}
+\subsubsection{\texorpdfstring{inv\+Matrix2()}{invMatrix2()}}
+{\footnotesize\ttfamily void inv\+Matrix2 (\begin{DoxyParamCaption}\item[{double $\ast$}]{J,  }\item[{double $\ast$}]{invJ }\end{DoxyParamCaption})}
+
+
+
+calculates the inverse of a 2x2 matrix 
+
+
+\begin{DoxyParams}{Parameters}
+{\em J} & the 2x2 matrix stored as an array \\
+\hline
+{\em invJ} & the location to store the inverse 2x2 matrix in\\
+\hline
+\end{DoxyParams}

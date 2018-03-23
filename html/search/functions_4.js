@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['main',['main',['../main_8cpp.html#a0ddf1224851353fc92bfbff6f499fa97',1,'main.cpp']]]
+  ['linspace',['linspace',['../init_8cpp.html#a23310125949490bfb05eb31b62c43c74',1,'init.cpp']]]
 ];
