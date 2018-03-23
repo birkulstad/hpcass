@@ -49,42 +49,80 @@ void WriteVtkFile(int, int, int, double* , int* , double* );
 // a = &argv[1]; //starts at 1
 // argc checks correct number of inputs
 
-int main() {
+int main(int argc, char* argv[]) {
     // IMPROVE: Diagonalise K-matrix
+    // FIX: Setting matrices to 0 at initialisation, so 0 entries are in fact zero if possible
+
 
     // --------------- Case Constants -----------------
     // Remove this block once the command line input is enabled
-    //      case[] = {a, h1, h2, L, tp, nelem_x, nelem_y,kx, ky, kxy, T_edge, q_edge, T0, q0};
-    const double caseval[] = {0, 1, 1, 2, 0.2, 10, 5, 250, 250, 0, 0, 2, 10, 2500}; //case1
+
+    //const double caseval[] = {a, h1, h2, L, tp, nelem_x, nelem_y,kx, ky, kxy, T_edge, q_edge, T0, q0};
+     const double caseval[] = {0, 1, 1, 2, 0.2, 10, 5, 250, 250, 0, 0, 2, 10, 2500}; //case1
     //const double caseval[] = {0, 1, 1, 2, 0.2, 10, 5, 250, 250, 0, 3, 1, 10, 2500}; //case2
     //const double caseval[] = {0.25, 1, 1.3, 3, 0.2, 15, 8, 250, 250, 0, 0, 3, -20, -5000}; //case3
 
-    // FIX: Setting matrices to 0 at initialisation, so 0 entries are in fact zero if possible
+    // ----- Integration scheme -----------------
+    const int gaussorder = 2;
+
+    // ----- Defining Geometry -----------------
+    const double a = caseval[0]; // constant in the polynomial describing the plate height
+    const double h1 = caseval[1];  // [m] Height at plate left edge
+    const double h2 = h1 * caseval[2]; // [m] Height at plate right edge
+    const double L = h1 * caseval[3];  // [m] Plate length
+
+    // ----- Defining Section -----------------
+    const double th = caseval[4];  // Thickness [m]
+
+    // ----- Meshing Geometry -----------------
+    const auto nelem_x = int(caseval[5]);  // Number of elements in the x-direction
+    const auto nelem_y = int(caseval[6]);  // Number of elements in y-direction
 
     // ----- Defining Materials -----------------
     const double kx = caseval[7];   // Thermal conductivity [W/mK]
     const double ky = caseval[8];   // Thermal conductivity [W/mK]
     const double kxy = caseval[9];  // Thermal conductivity [W/mK]
 
-    // ----- Defining Section -----------------
-    const double th = caseval[4];  // Thickness [m]
+    // ----- Boundary Conditions -----------------
+    const auto T_edge = int(caseval[10]); // Which edge the constant Temp is applied to 0 = left, 1 = top, 2 = right, 3 = bottom
+    const auto q_edge = int(caseval[11]); // Which edge the heat flux is applied to 0 = left, 1 = top, 2 = right, 3 = bottom
 
-    // ----- Integration scheme -----------------
-    const int gaussorder = 2;
+    // ----- Boundary Conditions Parameters -----------------
+    double T0 = caseval[12];  // Constant temperature at the chosen edge of the plate
+    double q0 = caseval[13];  // Constant flux at the chosen edge of the plate
 
+    // ##########################################################################################################################
+    /*
     // ----- Defining Geometry -----------------
-    // h = a * x**2 + b * x + h1:    Plate height h as a function of x
-    const double a = caseval[0]; // constant in the polynomial describing the plate height
-    const double h1 = caseval[1];  // [m] Height at plate left edge
-    const double h2 = h1 * caseval[2]; // [m] Height at plate right edge
-    const double L = h1 * caseval[3];  // [m] Plate length
+    const double a = atof(argv[1]); // constant in the polynomial describing the plate height
+    const double h1 = atof(argv[2]);  // [m] Height at plate left edge
+    const double h2 = h1 * atof(argv[3]); // [m] Height at plate right edge
+    const double L = h1 * atof(argv[4]);  // [m] Plate length
+
+    // ----- Defining Section -----------------
+    const double th = atof(argv[5]);  // Thickness [m]
+
+    // ----- Meshing Geometry -----------------
+    const int nelem_x = atoi(argv[6]);  // Number of elements in the x-direction
+    const int nelem_y = atoi(argv[7]);  // Number of elements in y-direction
+
+    // ----- Defining Materials -----------------
+    const double kx = atof(argv[8]);   // Thermal conductivity [W/mK]
+    const double ky = atof(argv[9]);   // Thermal conductivity [W/mK]
+    const double kxy = atof(argv[10]);  // Thermal conductivity [W/mK]
+
+    const int T_edge = atoi(argv[11]); // Which edge the constant Temp is applied to 0 = left, 1 = top, 2 = right, 3 = bottom
+    const int q_edge = atoi(argv[12]); // Which edge the heat flux is applied to 0 = left, 1 = top, 2 = right, 3 = bottom
+
+    double T0 = atof(argv[13]);  // Constant temperature at edge
+    double q0 = atof(argv[14]);  // Constant flux at right edge of the plate
+    */
+
+
 
     // calculate b constant in the polynomial describing the plate height
     const double b = -a * L + (h2 - h1) / L;
 
-    // ----- Meshing Geometry -----------------
-    const auto nelem_x = int(caseval[5]);  // Number of elements in the x-direction
-    const auto nelem_y = int(caseval[6]);  // Number of elements in y-direction
     const int nnode_x = nelem_x + 1; // Number of nodes in the x-direction
     const int nnode_y = nelem_y + 1; // Number of nodes in the y-direction
 
@@ -95,9 +133,8 @@ int main() {
     const int nelem = nelem_x * nelem_y;  // Total number of elements
     const int nnode = nnode_x * nnode_y;  // Total number of nodes
 
-    // ----- Calculation of Nodal coordinate matrix -> Coord ---------
-    // h(x) = a * x**2 + b * x + h1  // beam height as a function of x
-
+    // ----- Calculation of plate height h(x) ---------
+    // h = a * x^2 + b * x + h1
     // OPTIMISE: Create linspace-function and implement where needed
     double x[nnode_x];
 
@@ -106,7 +143,6 @@ int main() {
         x[i] = (L - 0) / (nelem_x) * i;
     }
     //printArray(x, nnode_x);
-
 
     // Creating x^2 array
     double xsq[nnode_x];
@@ -117,6 +153,7 @@ int main() {
     // Calculating h = a * x^2 + b * x + h1
     double h[nnode_x];
 
+    // Adding h1 to all entries before blas operations
     for (double &i : h) {
         i = h1;
     }
@@ -336,7 +373,6 @@ int main() {
 
     // ------------------ Apply boundary conditions -----------------
     // Compute nodal boundary flux vector f --- natural B.C
-    int q_edge; // Which edge the heat flux is applied to 0 = left, 1 = top, 2 = right, 3 = bottom
     int mult_i, mult_j; // Index multiplier defined by which edge is loaded, used to record edge nodes
     int nFluxNodes = 0; // Number of nodes on the chosen edge of the Plate
 
@@ -344,7 +380,6 @@ int main() {
     // IMPROVE: Add case with no flux boundary?
 
     // Assigning number of fluxNodes and index multipliers based on edge chosen
-    q_edge = int(caseval[11]);
     switch (q_edge){
         // Left edge
         case 0: nFluxNodes = nnode_y;
@@ -385,7 +420,6 @@ int main() {
 
 
     // ----- Defining flux load -----------------------
-    double q_flux = caseval[13];  // Constant flux at right edge of the plate
     int nbe = nFluxNodes - 1;  // Number of elements with flux load
 
     // Element boundary condition
@@ -393,8 +427,8 @@ int main() {
     for (int i = 0; i < nbe; i++) {
         n_bc[nbe * 0 + i] = fluxNodes[i];  // node 1
         n_bc[nbe * 1 + i] = fluxNodes[i + 1];  // node 2
-        n_bc[nbe * 2 + i] = q_flux; // flux value at node 1
-        n_bc[nbe * 3 + i] = q_flux;  //flux value at node 2
+        n_bc[nbe * 2 + i] = q0; // flux value at node 1
+        n_bc[nbe * 3 + i] = q0;  //flux value at node 2
     }
     //printMatrix(n_bc, 4, 5);
 
@@ -468,15 +502,12 @@ int main() {
 
 
     // ------------------ Apply boundary conditions ----------------- Essential B.C.
-    int T_edge; // Which edge the constant Temp is applied to 0 = left, 1 = top, 2 = right, 3 = bottom
     int nTempNodes = 0; // Number of nodes on the edge of the plate
-    double T0 = caseval[12];  // Constant temperature at edge
 
     // IMPROVE: Add check to ensure user input does not select same edge for q and T?
     // IMPROVE: Add case with no flux boundary?
 
     // Assigning number of tempNodes and index multipliers based on edge chosen
-    T_edge = int(caseval[10]);
     switch (T_edge){
         // Left edge
         case 0: nTempNodes = nnode_y;
@@ -738,9 +769,10 @@ void printMatrix(int* a, int M, int N){
     cout << "]" << endl;
 }
 
-// Creates a VTK file of the solutions
-void WriteVtkFile(int nnode_elem, int nnode, int nelem, double* Coord, int* ElemNode, double* T) {
 
+/// @brief Creates a VTK file of the solutions
+void WriteVtkFile(int nnode_elem, int nnode, int nelem, double* Coord, int* ElemNode, double* T) {
+/** asdfgsdfg */
     ofstream vOut("Output.vtk", ios::out | ios::trunc); // Output file initialisation
 
     vOut.precision(10);
