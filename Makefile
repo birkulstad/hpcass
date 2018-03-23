@@ -4,6 +4,7 @@ OBJS = main.o
 LDLIBS = -llapack -lblas
 
 default:main
+
 all:	main clean
 
 %.o:	%.cpp $(HDRS)
@@ -17,7 +18,7 @@ main:	$(OBJS)
 clean:
 	rm -f *.o *.vtk main
 
-# {a, h1, h2, L, tp, nelem_x, nelem_y,kx, ky, kxy, T_edge, q_edge, T0, q0}
+
 c1:	main
 	./main 0 1 1 2 0.2 10 5 250 250 0 0 2 10 2500
 
@@ -26,3 +27,7 @@ c2:	main
 
 c3:	main
 	./main 0.25 1 1.3 3 0.2 15 8 250 250 0 0 3 -20 -5000
+
+#c4 is user defined variables {a, h1, h2, L, tp, nelem_x, nelem_y,kx, ky, kxy, T_edge, q_edge, T0, q0}
+c4:	main
+	./main 0.25 1 1.3 3 0.2 15 8 250 250 0 0 4 -20 -5000

@@ -6,6 +6,7 @@
 #include "cblas.h"
 #include <limits>
 #include <cstring> // Need this for memset on Linux Remote FIX
+#include "colormod.h" // namespace Color
 
 #include <cstdlib>
 #include <cstdio>
@@ -24,6 +25,10 @@ extern "C" {
 }
 
 using namespace std;
+
+Color::Modifier def(Color::FG_DEFAULT);
+Color::Modifier red(Color::FG_RED);
+Color::Modifier green(Color::FG_GREEN);
 
 /*
  * OPTIMISE: stuff that could be optimised
@@ -408,8 +413,8 @@ int main(int argc, char* argv[]) {
                 mult_j = 0;
                 break;
 
-        default: cout << "Error! Choose a value between 0 and 3 corresponding to the edge with heat flux!" << endl;
-                 cout << "0 = left, 1 = top, 2 = right, 3 = bottom" << endl;
+        default: cout << red << "Error! Choose a value between 0 and 3 corresponding to the edge with heat flux!" << def << endl;
+                 cout << green << "0 = left, 1 = top, 2 = right, 3 = bottom" << def << endl;
     }
 
     // Initialise fluxNodes with size appropriate to the edge chosen
