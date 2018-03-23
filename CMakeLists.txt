@@ -4,7 +4,6 @@ project(hpcass)
 set(CMAKE_CXX_STANDARD 11)
 
 add_executable(hpcass main.cpp)
-add_executable(helmholtz cg_helmholtz_sb.cpp)
 
 find_package(BLAS REQUIRED)
 

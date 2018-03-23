@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
 
     // --------------- Case Constants -----------------
     // Remove this block once the command line input is enabled
-
+    /*
     //const double caseval[] = {a, h1, h2, L, tp, nelem_x, nelem_y,kx, ky, kxy, T_edge, q_edge, T0, q0};
      const double caseval[] = {0, 1, 1, 2, 0.2, 10, 5, 250, 250, 0, 0, 2, 10, 2500}; //case1
     //const double caseval[] = {0, 1, 1, 2, 0.2, 10, 5, 250, 250, 0, 3, 1, 10, 2500}; //case2
@@ -90,9 +90,12 @@ int main(int argc, char* argv[]) {
     // ----- Boundary Conditions Parameters -----------------
     double T0 = caseval[12];  // Constant temperature at the chosen edge of the plate
     double q0 = caseval[13];  // Constant flux at the chosen edge of the plate
-
+    */
     // ##########################################################################################################################
-    /*
+    
+    // ----- Integration scheme -----------------
+    const int gaussorder = 2;
+
     // ----- Defining Geometry -----------------
     const double a = atof(argv[1]); // constant in the polynomial describing the plate height
     const double h1 = atof(argv[2]);  // [m] Height at plate left edge
@@ -116,7 +119,7 @@ int main(int argc, char* argv[]) {
 
     double T0 = atof(argv[13]);  // Constant temperature at edge
     double q0 = atof(argv[14]);  // Constant flux at right edge of the plate
-    */
+    
 
 
 
