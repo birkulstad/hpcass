@@ -39,25 +39,11 @@ iostream
 /Users/birkulstad/hpc-exercises/hpcass/io.h
 
 /Users/birkulstad/hpc-exercises/hpcass/main.cpp
+cstring
+-
 iostream
 -
 cmath
--
-iomanip
--
-cstdlib
--
-cstdio
--
-numeric
--
-functional
--
-algorithm
--
-ctime
--
-cstring
 -
 valarray
 -

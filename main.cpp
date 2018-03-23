@@ -1,4 +1,4 @@
-#include <cstring> // Needed for memset to work in Linux environment
+#include <cstring>
 #include <iostream>
 #include <cmath>
 #include <valarray>
@@ -9,30 +9,11 @@
 #include "init.h"
 #include "oper.h"
 
-
-/*
-#include <iomanip>
-#include <cstdlib>
-#include <cstdio>
-#include <numeric>
-#include <functional>
-#include <algorithm>
-#include <ctime>
- */
-
 using namespace std;
 
 // Written by Birk Andreas Ulstad, Imperial College London, Department of Aeronautics March 2018
 // NOTE: All arrays are stored in RowMajor format, dynamic arrays are used sparsely and quickly delete from the heap.
 
-/*
- * OPTIMISE: stuff that could be optimised
- * IMPROVE: stuff that could be implemented in a more elegant/clear way
- */
-
-//FIX: Remove before submission
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "OCDFAInspection"
 
 int main(int argc, char* argv[]) {
 
@@ -46,50 +27,6 @@ int main(int argc, char* argv[]) {
         cout << "Invalid Communicator!" << endl;
     }
     cout << "I am process " << rank + 1 << " of " << size << endl;
-
-
-    //  ###################################################################################################
-    /*
-    // --------------- Case Constants -----------------
-    // Remove this block once the command line input is enabled
-    //const double caseval[] = {a, h1, h2, L, tp, nelem_x, nelem_y,kx, ky, kxy, T_edge, q_edge, T0, q0, case};
-    const double caseval[] = {0, 1, 1, 2, 0.2, 10, 5, 250, 250, 0, 0, 2, 10, 2500, 1}; //case1
-    //const double caseval[] = {0, 1, 1, 2, 0.2, 10, 5, 250, 250, 0, 3, 1, 10, 2500, 2}; //case2
-    //const double caseval[] = {0.25, 1, 1.3, 3, 0.2, 15, 8, 250, 250, 0, 0, 3, -20, -5000, 4}; //case3
-    //const double caseval[] = {0.25, 1, 2, 3, 0.2, 5, 25, 250, 250, 0, 0, 2, 10, 2500, 4}; //case4
-
-    // ----- Integration scheme -----------------
-    const int gaussorder = 2;
-
-    // ----- Defining Geometry -----------------
-    const double a = caseval[0]; // constant in the polynomial describing the plate height
-    const double h1 = caseval[1];  // [m] Height at plate left edge
-    const double h2 = h1 * caseval[2]; // [m] Height at plate right edge
-    const double L = h1 * caseval[3];  // [m] Plate length
-
-    // ----- Defining Section -----------------
-    const double th = caseval[4];  // Thickness [m]
-
-    // ----- Meshing Geometry -----------------
-    const auto nelem_x = int(caseval[5]);  // Number of elements in the x-direction
-    const auto nelem_y = int(caseval[6]);  // Number of elements in y-direction
-
-    // ----- Defining Materials -----------------
-    const double kx = caseval[7];   // Thermal conductivity [W/mK]
-    const double ky = caseval[8];   // Thermal conductivity [W/mK]
-    const double kxy = caseval[9];  // Thermal conductivity [W/mK]
-
-    // ----- Boundary Conditions -----------------
-    const auto T_edge = int(caseval[10]); // Which edge the constant Temp is applied to 0 = left, 1 = top, 2 = right, 3 = bottom
-    const auto q_edge = int(caseval[11]); // Which edge the heat flux is applied to 0 = left, 1 = top, 2 = right, 3 = bottom
-
-    // ----- Boundary Conditions Parameters -----------------
-    double T0 = caseval[12];  // Constant temperature at the chosen edge of the plate
-    double q0 = caseval[13];  // Constant flux at the chosen edge of the plate
-
-    const auto casenum = int(caseval[14]); // Case number for determining .vtk filename
-    */
-    // ##########################################################################################################################
 
     // ----- Integration scheme -----------------
     const int gaussorder = 2;
@@ -121,8 +58,6 @@ int main(int argc, char* argv[]) {
     double q0 = atof(argv[14]);  // Constant flux at right edge of the plate
 
     int casenum = atoi(argv[15]); // Case number for determining .vtk filename
-
-
 
     // ----------------------- Checking inputs, throw errorMessage if invalid ---------------------
     if (h1 <= 0 || h2 <= 0 || L <= 0 || th <= 0){errorMessage(1); return -1;}
@@ -549,11 +484,6 @@ int main(int argc, char* argv[]) {
 
     MPI_Finalize();
 
-    //FIX: Remove before submission
-    printMatrix(T,nnode_x, nnode_y);
-
     return 0;
 }
 
-//FIX: Remove before submission
-#pragma clang diagnostic pop

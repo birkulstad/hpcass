@@ -15,9 +15,8 @@ all:	main
 main:	$(OBJS)
 	$(CMPI) -o $@ $^ $(LDLIBS)
 
-#parallell version
-mainp: $(OBJS)
-	$(CMPI) -o $@ $^ $(LDLIBS)
+.PHONY:	clean
+	target
 
 clean:
 	rm -f *.o *.vtk main mainp
