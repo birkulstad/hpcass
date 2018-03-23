@@ -11,74 +11,30 @@
 				<Option working_dir="/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug"/>
 				<Option type="4"/>
 				<MakeCommands>
-					<Build command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
-					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/local/bin/gmake -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/local/bin/gmake -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/local/bin/gmake -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/local/bin/gmake -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 			<Target title="rebuild_cache">
 				<Option working_dir="/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug"/>
 				<Option type="4"/>
 				<MakeCommands>
-					<Build command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
-					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/local/bin/gmake -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/local/bin/gmake -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/local/bin/gmake -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/local/bin/gmake -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 			<Target title="edit_cache">
 				<Option working_dir="/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug"/>
 				<Option type="4"/>
 				<MakeCommands>
-					<Build command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
-					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-				</MakeCommands>
-			</Target>
-			<Target title="helmholtz">
-				<Option output="/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/helmholtz" prefix_auto="0" extension_auto="0"/>
-				<Option working_dir="/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug"/>
-				<Option object_output="./"/>
-				<Option type="1"/>
-				<Option compiler="gcc"/>
-				<Compiler>
-					<Add directory="/Library/Developer/CommandLineTools/usr/include/c++/v1"/>
-					<Add directory="/usr/local/include"/>
-					<Add directory="/Library/Developer/CommandLineTools/usr/lib/clang/9.0.0/include"/>
-					<Add directory="/Library/Developer/CommandLineTools/usr/include"/>
-					<Add directory="/usr/include"/>
-					<Add directory="/System/Library/Frameworks"/>
-					<Add directory="/Library/Frameworks"/>
-				</Compiler>
-				<MakeCommands>
-					<Build command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 helmholtz"/>
-					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-				</MakeCommands>
-			</Target>
-			<Target title="helmholtz/fast">
-				<Option output="/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/helmholtz" prefix_auto="0" extension_auto="0"/>
-				<Option working_dir="/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug"/>
-				<Option object_output="./"/>
-				<Option type="1"/>
-				<Option compiler="gcc"/>
-				<Compiler>
-					<Add directory="/Library/Developer/CommandLineTools/usr/include/c++/v1"/>
-					<Add directory="/usr/local/include"/>
-					<Add directory="/Library/Developer/CommandLineTools/usr/lib/clang/9.0.0/include"/>
-					<Add directory="/Library/Developer/CommandLineTools/usr/include"/>
-					<Add directory="/usr/include"/>
-					<Add directory="/System/Library/Frameworks"/>
-					<Add directory="/Library/Frameworks"/>
-				</Compiler>
-				<MakeCommands>
-					<Build command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 helmholtz/fast"/>
-					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/local/bin/gmake -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/local/bin/gmake -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/local/bin/gmake -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/local/bin/gmake -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 			<Target title="hpcass">
@@ -97,10 +53,10 @@
 					<Add directory="/Library/Frameworks"/>
 				</Compiler>
 				<MakeCommands>
-					<Build command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 hpcass"/>
-					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/local/bin/gmake -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 hpcass"/>
+					<CompileFile command="/usr/local/bin/gmake -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/local/bin/gmake -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/local/bin/gmake -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 			<Target title="hpcass/fast">
@@ -119,13 +75,19 @@
 					<Add directory="/Library/Frameworks"/>
 				</Compiler>
 				<MakeCommands>
-					<Build command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 hpcass/fast"/>
-					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/local/bin/gmake -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 hpcass/fast"/>
+					<CompileFile command="/usr/local/bin/gmake -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/local/bin/gmake -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/local/bin/gmake -j8 -f &quot;/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 		</Build>
+		<Unit filename="/Users/birkulstad/hpc-exercises/hpcass/io.cpp">
+			<Option target="hpcass"/>
+		</Unit>
+		<Unit filename="/Users/birkulstad/hpc-exercises/hpcass/io.h">
+			<Option target="hpcass"/>
+		</Unit>
 		<Unit filename="/Users/birkulstad/hpc-exercises/hpcass/main.cpp">
 			<Option target="hpcass"/>
 		</Unit>

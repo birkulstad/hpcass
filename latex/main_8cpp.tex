@@ -8,6 +8,9 @@
 {\ttfamily \#include \char`\"{}cblas.\+h\char`\"{}}\newline
 {\ttfamily \#include $<$limits$>$}\newline
 {\ttfamily \#include $<$cstring$>$}\newline
+{\ttfamily \#include \char`\"{}colormod.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}io.\+h\char`\"{}}\newline
+{\ttfamily \#include $<$mpi.\+h$>$}\newline
 {\ttfamily \#include $<$cstdlib$>$}\newline
 {\ttfamily \#include $<$cstdio$>$}\newline
 {\ttfamily \#include $<$vector$>$}\newline
@@ -25,10 +28,6 @@
 \item 
 void \mbox{\hyperlink{main_8cpp_a9b91c72ded7de2f0b393ea75de53929b}{F77\+N\+A\+ME}}() \mbox{\hyperlink{main_8cpp_a16a29d9b4c09920de08104c74871e7f5}{dgesv}} (const int \&n, const int \&nrhs, const double $\ast$A, const int \&lda, int $\ast$ipiv, double $\ast$B, const int \&ldb, int \&info)
 \item 
-void \mbox{\hyperlink{main_8cpp_aac9fbb96b86a2533f4dae916c337d340}{print\+Matrix}} (double $\ast$, int, int)
-\item 
-void \mbox{\hyperlink{main_8cpp_aa904ff69b5304ccde54e13482c9f8e93}{print\+Matrix}} (int $\ast$, int, int)
-\item 
 double \mbox{\hyperlink{main_8cpp_acb7f0ed8aa1e2cedae630284711801a5}{det\+Matrix2}} (double $\ast$)
 \item 
 void \mbox{\hyperlink{main_8cpp_a4ecc8caf38d3ce41629fd13465823a29}{inv\+Matrix2}} (double $\ast$, double $\ast$)
@@ -37,8 +36,10 @@ int \mbox{\hyperlink{main_8cpp_a409a36b85ac26915628e066c6fef81c0}{get\+Ind\+\_\+
 \item 
 int \mbox{\hyperlink{main_8cpp_a5cf5c24afac47ac20b6ded42691f6009}{get\+Ind\+\_\+j}} (int, int)
 \item 
-void \mbox{\hyperlink{main_8cpp_a665c380bef95251896c2dd7aab2a0545}{Write\+Vtk\+File}} (int nnode\+\_\+elem, int nnode, int nelem, double $\ast$Coord, int $\ast$Elem\+Node, double $\ast$T)
-\begin{DoxyCompactList}\small\item\em Creates a V\+TK file of the solutions. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{main_8cpp_a114c6cc350b21e50b597434d778703cb}{zeros}} (double $\ast$, int)
+\item 
+void \mbox{\hyperlink{main_8cpp_a756b02e2f48c16e971fc9c2597b97bb2}{zeros}} (int $\ast$, int)
+\item 
 int \mbox{\hyperlink{main_8cpp_a0ddf1224851353fc92bfbff6f499fa97}{main}} (int argc, char $\ast$argv\mbox{[}$\,$\mbox{]})
 \end{DoxyCompactItemize}
 
@@ -89,26 +90,15 @@ int \mbox{\hyperlink{main_8cpp_a0ddf1224851353fc92bfbff6f499fa97}{main}} (int ar
 \subsubsection{\texorpdfstring{main()}{main()}}
 {\footnotesize\ttfamily int main (\begin{DoxyParamCaption}\item[{int}]{argc,  }\item[{char $\ast$}]{argv\mbox{[}$\,$\mbox{]} }\end{DoxyParamCaption})}
 
-\mbox{\Hypertarget{main_8cpp_aac9fbb96b86a2533f4dae916c337d340}\label{main_8cpp_aac9fbb96b86a2533f4dae916c337d340}} 
-\index{main.\+cpp@{main.\+cpp}!print\+Matrix@{print\+Matrix}}
-\index{print\+Matrix@{print\+Matrix}!main.\+cpp@{main.\+cpp}}
-\subsubsection{\texorpdfstring{print\+Matrix()}{printMatrix()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
-{\footnotesize\ttfamily void print\+Matrix (\begin{DoxyParamCaption}\item[{double $\ast$}]{a,  }\item[{int}]{M,  }\item[{int}]{N }\end{DoxyParamCaption})}
+\mbox{\Hypertarget{main_8cpp_a114c6cc350b21e50b597434d778703cb}\label{main_8cpp_a114c6cc350b21e50b597434d778703cb}} 
+\index{main.\+cpp@{main.\+cpp}!zeros@{zeros}}
+\index{zeros@{zeros}!main.\+cpp@{main.\+cpp}}
+\subsubsection{\texorpdfstring{zeros()}{zeros()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily void zeros (\begin{DoxyParamCaption}\item[{double $\ast$}]{a,  }\item[{int}]{length }\end{DoxyParamCaption})}
 
-\mbox{\Hypertarget{main_8cpp_aa904ff69b5304ccde54e13482c9f8e93}\label{main_8cpp_aa904ff69b5304ccde54e13482c9f8e93}} 
-\index{main.\+cpp@{main.\+cpp}!print\+Matrix@{print\+Matrix}}
-\index{print\+Matrix@{print\+Matrix}!main.\+cpp@{main.\+cpp}}
-\subsubsection{\texorpdfstring{print\+Matrix()}{printMatrix()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
-{\footnotesize\ttfamily void print\+Matrix (\begin{DoxyParamCaption}\item[{int $\ast$}]{a,  }\item[{int}]{M,  }\item[{int}]{N }\end{DoxyParamCaption})}
+\mbox{\Hypertarget{main_8cpp_a756b02e2f48c16e971fc9c2597b97bb2}\label{main_8cpp_a756b02e2f48c16e971fc9c2597b97bb2}} 
+\index{main.\+cpp@{main.\+cpp}!zeros@{zeros}}
+\index{zeros@{zeros}!main.\+cpp@{main.\+cpp}}
+\subsubsection{\texorpdfstring{zeros()}{zeros()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily void zeros (\begin{DoxyParamCaption}\item[{int $\ast$}]{a,  }\item[{int}]{length }\end{DoxyParamCaption})}
 
-\mbox{\Hypertarget{main_8cpp_a665c380bef95251896c2dd7aab2a0545}\label{main_8cpp_a665c380bef95251896c2dd7aab2a0545}} 
-\index{main.\+cpp@{main.\+cpp}!Write\+Vtk\+File@{Write\+Vtk\+File}}
-\index{Write\+Vtk\+File@{Write\+Vtk\+File}!main.\+cpp@{main.\+cpp}}
-\subsubsection{\texorpdfstring{Write\+Vtk\+File()}{WriteVtkFile()}}
-{\footnotesize\ttfamily void Write\+Vtk\+File (\begin{DoxyParamCaption}\item[{int}]{nnode\+\_\+elem,  }\item[{int}]{nnode,  }\item[{int}]{nelem,  }\item[{double $\ast$}]{Coord,  }\item[{int $\ast$}]{Elem\+Node,  }\item[{double $\ast$}]{T }\end{DoxyParamCaption})}
-
-
-
-Creates a V\+TK file of the solutions. 
-
-asdfgsdfg 

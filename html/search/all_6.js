@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['writevtkfile',['WriteVtkFile',['../main_8cpp.html#a665c380bef95251896c2dd7aab2a0545',1,'main.cpp']]]
+  ['printmatrix',['printMatrix',['../io_8cpp.html#a9f33da2b4c7346922e002b8fd63fb45a',1,'printMatrix(double *a, int M, int N):&#160;io.cpp'],['../io_8cpp.html#a27ef549dc8ac06bf90c53d984df61859',1,'printMatrix(int *a, int M, int N):&#160;io.cpp']]]
 ];

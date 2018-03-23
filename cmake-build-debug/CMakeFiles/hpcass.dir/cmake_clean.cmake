@@ -1,5 +1,6 @@
 file(REMOVE_RECURSE
   "CMakeFiles/hpcass.dir/main.cpp.o"
+  "CMakeFiles/hpcass.dir/io.cpp.o"
   "hpcass.pdb"
   "hpcass"
 )

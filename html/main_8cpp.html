@@ -77,6 +77,9 @@ $(function() {
 <code>#include &quot;cblas.h&quot;</code><br />
 <code>#include &lt;limits&gt;</code><br />
 <code>#include &lt;cstring&gt;</code><br />
+<code>#include &quot;colormod.h&quot;</code><br />
+<code>#include &quot;io.h&quot;</code><br />
+<code>#include &lt;mpi.h&gt;</code><br />
 <code>#include &lt;cstdlib&gt;</code><br />
 <code>#include &lt;cstdio&gt;</code><br />
 <code>#include &lt;vector&gt;</code><br />
@@ -94,10 +97,6 @@ Macros</h2></td></tr>
 Functions</h2></td></tr>
 <tr class="memitem:a16a29d9b4c09920de08104c74871e7f5"><td class="memItemLeft" align="right" valign="top">void <a class="el" href="main_8cpp.html#a9b91c72ded7de2f0b393ea75de53929b">F77NAME</a>()&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8cpp.html#a16a29d9b4c09920de08104c74871e7f5">dgesv</a> (const int &amp;n, const int &amp;nrhs, const double *A, const int &amp;lda, int *ipiv, double *B, const int &amp;ldb, int &amp;info)</td></tr>
 <tr class="separator:a16a29d9b4c09920de08104c74871e7f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aac9fbb96b86a2533f4dae916c337d340"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8cpp.html#aac9fbb96b86a2533f4dae916c337d340">printMatrix</a> (double *, int, int)</td></tr>
-<tr class="separator:aac9fbb96b86a2533f4dae916c337d340"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa904ff69b5304ccde54e13482c9f8e93"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8cpp.html#aa904ff69b5304ccde54e13482c9f8e93">printMatrix</a> (int *, int, int)</td></tr>
-<tr class="separator:aa904ff69b5304ccde54e13482c9f8e93"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acb7f0ed8aa1e2cedae630284711801a5"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8cpp.html#acb7f0ed8aa1e2cedae630284711801a5">detMatrix2</a> (double *)</td></tr>
 <tr class="separator:acb7f0ed8aa1e2cedae630284711801a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4ecc8caf38d3ce41629fd13465823a29"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8cpp.html#a4ecc8caf38d3ce41629fd13465823a29">invMatrix2</a> (double *, double *)</td></tr>
@@ -106,9 +105,10 @@ Functions</h2></td></tr>
 <tr class="separator:a409a36b85ac26915628e066c6fef81c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5cf5c24afac47ac20b6ded42691f6009"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8cpp.html#a5cf5c24afac47ac20b6ded42691f6009">getInd_j</a> (int, int)</td></tr>
 <tr class="separator:a5cf5c24afac47ac20b6ded42691f6009"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a665c380bef95251896c2dd7aab2a0545"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8cpp.html#a665c380bef95251896c2dd7aab2a0545">WriteVtkFile</a> (int nnode_elem, int nnode, int nelem, double *Coord, int *ElemNode, double *T)</td></tr>
-<tr class="memdesc:a665c380bef95251896c2dd7aab2a0545"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a VTK file of the solutions.  <a href="#a665c380bef95251896c2dd7aab2a0545">More...</a><br /></td></tr>
-<tr class="separator:a665c380bef95251896c2dd7aab2a0545"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a114c6cc350b21e50b597434d778703cb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8cpp.html#a114c6cc350b21e50b597434d778703cb">zeros</a> (double *, int)</td></tr>
+<tr class="separator:a114c6cc350b21e50b597434d778703cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a756b02e2f48c16e971fc9c2597b97bb2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8cpp.html#a756b02e2f48c16e971fc9c2597b97bb2">zeros</a> (int *, int)</td></tr>
+<tr class="separator:a756b02e2f48c16e971fc9c2597b97bb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0ddf1224851353fc92bfbff6f499fa97"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8cpp.html#a0ddf1224851353fc92bfbff6f499fa97">main</a> (int argc, char *argv[])</td></tr>
 <tr class="separator:a0ddf1224851353fc92bfbff6f499fa97"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -326,14 +326,14 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="aac9fbb96b86a2533f4dae916c337d340"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aac9fbb96b86a2533f4dae916c337d340">&#9670;&nbsp;</a></span>printMatrix() <span class="overload">[1/2]</span></h2>
+<a id="a114c6cc350b21e50b597434d778703cb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a114c6cc350b21e50b597434d778703cb">&#9670;&nbsp;</a></span>zeros() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void printMatrix </td>
+          <td class="memname">void zeros </td>
           <td>(</td>
           <td class="paramtype">double *&#160;</td>
           <td class="paramname"><em>a</em>, </td>
@@ -342,13 +342,7 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>M</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>N</em>&#160;</td>
+          <td class="paramname"><em>length</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -360,14 +354,14 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="aa904ff69b5304ccde54e13482c9f8e93"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa904ff69b5304ccde54e13482c9f8e93">&#9670;&nbsp;</a></span>printMatrix() <span class="overload">[2/2]</span></h2>
+<a id="a756b02e2f48c16e971fc9c2597b97bb2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a756b02e2f48c16e971fc9c2597b97bb2">&#9670;&nbsp;</a></span>zeros() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void printMatrix </td>
+          <td class="memname">void zeros </td>
           <td>(</td>
           <td class="paramtype">int *&#160;</td>
           <td class="paramname"><em>a</em>, </td>
@@ -376,13 +370,7 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>M</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>N</em>&#160;</td>
+          <td class="paramname"><em>length</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -391,68 +379,13 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-</div>
-</div>
-<a id="a665c380bef95251896c2dd7aab2a0545"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a665c380bef95251896c2dd7aab2a0545">&#9670;&nbsp;</a></span>WriteVtkFile()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void WriteVtkFile </td>
-          <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>nnode_elem</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>nnode</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>nelem</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double *&#160;</td>
-          <td class="paramname"><em>Coord</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int *&#160;</td>
-          <td class="paramname"><em>ElemNode</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double *&#160;</td>
-          <td class="paramname"><em>T</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Creates a VTK file of the solutions. </p>
-<p>asdfgsdfg </p>
 
 </div>
 </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Mar 23 2018 08:20:20 for High Performance Computing Coursework by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.14
 </small></address>

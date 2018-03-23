@@ -1,4 +1,3 @@
 /Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/CMakeFiles/rebuild_cache.dir
 /Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/CMakeFiles/edit_cache.dir
-/Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/CMakeFiles/helmholtz.dir
 /Users/birkulstad/hpc-exercises/hpcass/cmake-build-debug/CMakeFiles/hpcass.dir

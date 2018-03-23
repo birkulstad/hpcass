@@ -7,9 +7,11 @@
 #include <limits>
 #include <cstring> // Need this for memset on Linux Remote FIX
 #include "colormod.h" // namespace Color
-
+#include "io.h"
+#include <mpi.h>
 #include <cstdlib>
 #include <cstdio>
+
 #include <vector>
 #include <numeric>
 #include <functional>
@@ -26,20 +28,14 @@ extern "C" {
 
 using namespace std;
 
-Color::Modifier def(Color::FG_DEFAULT);
-Color::Modifier red(Color::FG_RED);
-Color::Modifier green(Color::FG_GREEN);
-
 /*
  * OPTIMISE: stuff that could be optimised
- * HELP: stuff I'm stuck on
  * IMPROVE: stuff that could be implemented in a more elegant/clear way
  * FIX: temporary bugs/problems that need fixing to progress
  */
 
 //Declaring function prototypes
-void printMatrix(double*, int, int);
-void printMatrix(int*, int, int);
+
 
 double detMatrix2(double*);
 void invMatrix2(double*, double*);
@@ -47,25 +43,33 @@ void invMatrix2(double*, double*);
 int getInd_i(int, int);
 int getInd_j(int, int);
 
-void WriteVtkFile(int, int, int, double* , int* , double* );
-
-// TODO: IMPLEMENT COMMAND LINE INPUT
-//  int argc, char* argv[] inside main()
-// a = &argv[1]; //starts at 1
-// argc checks correct number of inputs
+void zeros(double*, int);
+void zeros(int*, int);
 
 int main(int argc, char* argv[]) {
-    // IMPROVE: Diagonalise K-matrix
-    // FIX: Setting matrices to 0 at initialisation, so 0 entries are in fact zero if possible
+    // Initialising MPI-variables
+    /*
+    int rank, size, retval_rank, retval_size;
 
+    MPI_Init(&argc, &argv);
 
+    retval_rank = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    retval_size = MPI_Comm_size(MPI_COMM_WORLD, &size);
+    if (retval_rank == MPI_ERR_COMM || retval_size == MPI_ERR_COMM){
+        cout << red << "Invalid Communicator!" << def << endl;
+    }
+    cout << "I am process " << rank + 1 << " of " << size << endl;
+    */
+
+    //  ##########################################################################################################################
+    /*
     // --------------- Case Constants -----------------
     // Remove this block once the command line input is enabled
-    /*
     //const double caseval[] = {a, h1, h2, L, tp, nelem_x, nelem_y,kx, ky, kxy, T_edge, q_edge, T0, q0};
-     const double caseval[] = {0, 1, 1, 2, 0.2, 10, 5, 250, 250, 0, 0, 2, 10, 2500}; //case1
+    const double caseval[] = {0, 1, 1, 2, 0.2, 10, 5, 250, 250, 0, 0, 2, 10, 2500}; //case1
     //const double caseval[] = {0, 1, 1, 2, 0.2, 10, 5, 250, 250, 0, 3, 1, 10, 2500}; //case2
     //const double caseval[] = {0.25, 1, 1.3, 3, 0.2, 15, 8, 250, 250, 0, 0, 3, -20, -5000}; //case3
+    //const double caseval[] = {0, -1, 1, 2, 0.2, 10, 5, 250, 250, 0, 0, 2, 10, 2500}; //case4
 
     // ----- Integration scheme -----------------
     const int gaussorder = 2;
@@ -97,7 +101,7 @@ int main(int argc, char* argv[]) {
     double q0 = caseval[13];  // Constant flux at the chosen edge of the plate
     */
     // ##########################################################################################################################
-    
+
     // ----- Integration scheme -----------------
     const int gaussorder = 2;
 
@@ -124,11 +128,19 @@ int main(int argc, char* argv[]) {
 
     double T0 = atof(argv[13]);  // Constant temperature at edge
     double q0 = atof(argv[14]);  // Constant flux at right edge of the plate
-    
 
 
 
-    // calculate b constant in the polynomial describing the plate height
+    // {a, h1, h2, L, tp, nelem_x, nelem_y,kx, ky, kxy, T_edge, q_edge, T0, q0};
+    // ----------------------- Checking inputs, throw errorMessage if invalid ---------------------
+    if (h1 <= 0 || h2 <= 0 || L <= 0 || th <= 0){errorMessage(1); return -1;}
+    if (nelem_x <= 1 || nelem_y <= 1){errorMessage(2); return -1;}
+    if (kx * ky <= 0){errorMessage(3); return -1;}
+    if ((T_edge < 0 || T_edge > 3) || (q_edge < 0 || q_edge > 3)){errorMessage(4); return -1;}
+    if (T_edge == q_edge){errorMessage(5); return -1;}
+    if (a > 2 * (h1 + h2)/(L * (2 - L))){errorMessage(6); return -1;}
+
+    // Calculate b constant in the polynomial describing the plate height
     const double b = -a * L + (h2 - h1) / L;
 
     const int nnode_x = nelem_x + 1; // Number of nodes in the x-direction
@@ -222,7 +234,8 @@ int main(int argc, char* argv[]) {
 
     // ----- Generate global dof numbers -----------------
     int eNodes[nnode_elem];         // Nodes associated with a given element
-    int globDof[nnode * 2]={0};     // List of [number of Dof for node, global Dof]
+    int globDof[nnode * 2];     // List of [number of Dof for node, global Dof]
+    zeros(globDof, nnode * 2);
 
     for (int i = 0; i < nelem; i++){
         for (int k = 0; k < nnode_elem; k++) {
@@ -260,17 +273,16 @@ int main(int argc, char* argv[]) {
     // Conductivity matrix D
     const double D[2 * 2] = {kx, kxy, kxy, ky};
 
-
-
     // ------ Defining variables used in K-assembly --------------
 
     // Variables used for storing matrices/related to matrix operations
     auto* Ke = new double[nnode_elem * nnode_elem];   // Initialising element stiffness matrix Ke on heap to allow
                                                         // memset for every new element
-    double K[nnode * nnode]={0};  // Initiation of global stiffness matrix K
+    double K[nnode * nnode];  // Initiation of global stiffness matrix K
     double B[2 * nnode_elem]; // Temporary matrix for cblas operations
     double C[nnode_elem * 2]; // Temporary matrix for cblas operations
     double Ke_a;    // alpha-multiplier for cblas calculation of Ke
+    zeros(K, nnode * nnode);
 
     // Variables associated with the the natural coordinate system and the Jacobian
     double eta, xi; // Natural coordinates
@@ -391,30 +403,30 @@ int main(int argc, char* argv[]) {
     switch (q_edge){
         // Left edge
         case 0: nFluxNodes = nnode_y;
-                mult_i = nnode_x;
-                mult_j = 0;
-                break;
+            mult_i = nnode_x;
+            mult_j = 0;
+            break;
 
         // Top edge
         case 1: nFluxNodes = nnode_x;
-                mult_i = 1;
-                mult_j = nnode_x * nelem_y;
-                break;
+            mult_i = 1;
+            mult_j = nnode_x * nelem_y;
+            break;
 
         // Right edge
         case 2: nFluxNodes = nnode_y;
-                mult_i = nnode_x;
-                mult_j = nelem_x;
-                break;
+            mult_i = nnode_x;
+            mult_j = nelem_x;
+            break;
 
         // Bottom edge
         case 3: nFluxNodes = nnode_x;
-                mult_i = 1;
-                mult_j = 0;
-                break;
+            mult_i = 1;
+            mult_j = 0;
+            break;
 
-        default: cout << red << "Error! Choose a value between 0 and 3 corresponding to the edge with heat flux!" << def << endl;
-                 cout << green << "0 = left, 1 = top, 2 = right, 3 = bottom" << def << endl;
+        default:
+            break;
     }
 
     // Initialise fluxNodes with size appropriate to the edge chosen
@@ -442,13 +454,14 @@ int main(int argc, char* argv[]) {
 
 
     // --------------- Calculate Nodal Flux Vector f -------------------
-    double f[nnode] = {0};  // initialize nodal flux vector
+    double f[nnode];  // initialize nodal flux vector
     int node1; // first node along an element edge
     int node2; // second node along an element edge
     double x1, y1, x2, y2; // Coordinates of the two nodes connected to an element edge
     double flux; // Flux at an element edge
     double leng; // Length of element edge
     double n_bce[2]; // initialising flux values at the two nodes connected to an element edge
+    zeros(f, nnode);
 
     auto* fq = new double[2]; // initialize the nodal source vector
 
@@ -541,8 +554,8 @@ int main(int argc, char* argv[]) {
             mult_j = 0;
             break;
 
-        default: cout << "Error! Choose a value between 0 and 3 corresponding to the edge with heat flux!" << endl;
-            cout << "0 = left, 1 = top, 2 = right, 3 = bottom" << endl;
+        default:
+            break;
     }
 
     // Initialise fluxNodes with size appropriate to the edge selected
@@ -564,7 +577,8 @@ int main(int argc, char* argv[]) {
     //printMatrix(BC,nTempNodes,2);
 
     // ----------- Assembling global temperature vector ------------
-    double T[nnode] = {0}; // Initialize nodal temperature vector
+    double T[nnode]; // Initialize nodal temperature vector
+    zeros(T, nnode);
 
     // Setting temperatures of nodes along chosen edge to T0
     for (int i = 0; i < nTempNodes; i++){
@@ -577,12 +591,13 @@ int main(int argc, char* argv[]) {
     // IMPROVE: Increase efficiency by masking using element-wise operations rather than loops
 
     const int rDof = nnode - nTempNodes;// Number of nodes not affected by temp BC
-    int mask_E[nnode] = {0};            // Known temperature Dof
+    int mask_E[nnode];            // Known temperature Dof
     double T_E[nTempNodes];             // Known values of T
     double T_F[nnode-nTempNodes];       // Unknown values of T
     double f_E[nTempNodes];             // Unknown values of f
     double f_F[rDof];                   // Known values of f
     double rhs[rDof];                   // RHS of linear solver
+    zeros(mask_E, nnode);
 
 
     // Creating mask array for known values. If the entry of the array is known -> entry = 1
@@ -711,9 +726,23 @@ int main(int argc, char* argv[]) {
     delete[] tempNodes;
     delete[] BC;
 
+    //MPI_Finalize();
+
     return 0;
 }
 
+
+void zeros(double* a, int length){
+    for (int i = 0; i < length; i++){
+        a[i] = 0;
+    }
+}
+
+void zeros(int* a, int length){
+    for (int i = 0; i < length; i++){
+        a[i] = 0;
+    }
+}
 
 int getInd_i(int node, int nnode_y){
     int i = node % (nnode_y); // Nodal Row number
@@ -741,89 +770,3 @@ void invMatrix2(double* J, double* invJ){
     invJ[3] = J[0] / detJ;
 }
 
-void printMatrix(double* a, int M, int N){
-    cout << "[";
-    for (int i = 0; i < M; ++i){
-        for (int j = 0; j < N; ++j){
-            if (i + j >= 1){
-                cout << ", ";
-            };
-            if ((j == 0) && (i > 0)){
-                cout << endl;
-            }
-            cout << setw(8) << *(a + i * N + j);
-
-        }
-
-    }
-    cout << "]" << endl;
-}
-
-void printMatrix(int* a, int M, int N){
-    cout << "[";
-    for (int i = 0; i < M; ++i){
-        for (int j = 0; j < N; ++j){
-            if (i + j >= 1){
-                cout << ", ";
-            };
-            if ((j == 0) && (i > 0)){
-                cout << endl;
-            }
-            cout << setw(5) << *(a + i * N + j);
-
-        }
-
-    }
-    cout << "]" << endl;
-}
-
-
-/// @brief Creates a VTK file of the solutions
-void WriteVtkFile(int nnode_elem, int nnode, int nelem, double* Coord, int* ElemNode, double* T) {
-/** asdfgsdfg */
-    ofstream vOut("Output.vtk", ios::out | ios::trunc); // Output file initialisation
-
-    vOut.precision(10);
-
-    // Title and info
-    vOut << "# vtk DataFile Version 4.0" << endl; // VTK Version
-    vOut << "vtk output" << endl;   // Stating output
-    vOut << "ASCII" << endl;    // Format
-    vOut << "DATASET UNSTRUCTURED_GRID" << endl;    // Dataset
-    vOut << "POINTS " << nnode << " double" << endl; // Data type
-
-    // Print nodal coordinates
-    for (int i = 0; i < nnode ; i++) {
-        // [x,y,z] (=0), separated by spaces
-        vOut << Coord[2 * i] << " " << Coord[2 * i + 1] << " " << "0 ";
-    }
-    vOut << endl;
-
-    vOut << "Cells " << nelem << " " << (nnode_elem + 1) * nelem << endl;
-
-    // Print nodes of each element
-    for (int i = 0; i < nelem; i++) {
-        vOut << nnode_elem << " ";
-        for (int j = 1; j < nnode_elem + 1; j++) {
-            vOut << ElemNode[(nnode_elem + 1) * i + j] << " ";
-        }
-        vOut << endl;
-    }
-
-    // Print cell types as quadrilateral elements
-    vOut << "CELL_TYPES " << nelem << endl;
-    for (int i = 0; i < nelem; i++) {
-        vOut << "9 " << endl;
-    }
-    // Adding metadata
-    vOut << "POINT_DATA " << nnode << endl;
-    vOut << "FIELD FieldData 1" << endl;
-    vOut << "disp 1 " << nnode << " double" << endl;
-
-    // Outputting temperature vector T
-    for (int i = 0; i < nnode; i++) {
-        vOut << T[i] << " ";
-    }
-    vOut.close();
-
-}

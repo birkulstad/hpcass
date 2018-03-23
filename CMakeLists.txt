@@ -3,7 +3,7 @@ project(hpcass)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(hpcass main.cpp)
+add_executable(hpcass main.cpp io.h io.cpp)
 
 find_package(BLAS REQUIRED)
 
@@ -12,3 +12,7 @@ target_link_libraries(hpcass ${BLAS_LIBRARIES})
 find_package(LAPACK REQUIRED)
 
 target_link_libraries(hpcass ${LAPACK_LIBRARIES})
+
+find_package(MPI REQUIRED)
+
+target_link_libraries(hpcass ${MPI_LIBRARIES})

@@ -12,6 +12,24 @@ stddef.h
 openblas_config.h
 /Users/birkulstad/hpc-exercises/hpcass/openblas_config.h
 
+/Users/birkulstad/hpc-exercises/hpcass/colormod.h
+ostream
+-
+
+/Users/birkulstad/hpc-exercises/hpcass/io.cpp
+io.h
+/Users/birkulstad/hpc-exercises/hpcass/io.h
+colormod.h
+/Users/birkulstad/hpc-exercises/hpcass/colormod.h
+fstream
+-
+iomanip
+-
+iostream
+-
+
+/Users/birkulstad/hpc-exercises/hpcass/io.h
+
 /Users/birkulstad/hpc-exercises/hpcass/main.cpp
 iostream
 -
@@ -28,6 +46,12 @@ cblas.h
 limits
 -
 cstring
+-
+colormod.h
+/Users/birkulstad/hpc-exercises/hpcass/colormod.h
+io.h
+/Users/birkulstad/hpc-exercises/hpcass/io.h
+mpi.h
 -
 cstdlib
 -

@@ -111,19 +111,6 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named helmholtz
-
-# Build rule for target.
-helmholtz: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 helmholtz
-.PHONY : helmholtz
-
-# fast build rule for target.
-helmholtz/fast:
-	$(MAKE) -f CMakeFiles/helmholtz.dir/build.make CMakeFiles/helmholtz.dir/build
-.PHONY : helmholtz/fast
-
-#=============================================================================
 # Target rules for targets named hpcass
 
 # Build rule for target.
@@ -135,6 +122,33 @@ hpcass: cmake_check_build_system
 hpcass/fast:
 	$(MAKE) -f CMakeFiles/hpcass.dir/build.make CMakeFiles/hpcass.dir/build
 .PHONY : hpcass/fast
+
+io.o: io.cpp.o
+
+.PHONY : io.o
+
+# target to build an object file
+io.cpp.o:
+	$(MAKE) -f CMakeFiles/hpcass.dir/build.make CMakeFiles/hpcass.dir/io.cpp.o
+.PHONY : io.cpp.o
+
+io.i: io.cpp.i
+
+.PHONY : io.i
+
+# target to preprocess a source file
+io.cpp.i:
+	$(MAKE) -f CMakeFiles/hpcass.dir/build.make CMakeFiles/hpcass.dir/io.cpp.i
+.PHONY : io.cpp.i
+
+io.s: io.cpp.s
+
+.PHONY : io.s
+
+# target to generate assembly for a file
+io.cpp.s:
+	$(MAKE) -f CMakeFiles/hpcass.dir/build.make CMakeFiles/hpcass.dir/io.cpp.s
+.PHONY : io.cpp.s
 
 main.o: main.cpp.o
 
@@ -171,8 +185,10 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
-	@echo "... helmholtz"
 	@echo "... hpcass"
+	@echo "... io.o"
+	@echo "... io.i"
+	@echo "... io.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
